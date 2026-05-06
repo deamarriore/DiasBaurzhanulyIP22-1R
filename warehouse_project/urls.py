@@ -8,7 +8,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
-from django.contrib.auth.models import User # Добавили импорт
+from django.contrib.auth.models import User  # Импорт для работы с пользователями
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -17,25 +17,19 @@ urlpatterns = [
     path("", RedirectView.as_view(url="/accounting/", permanent=False)),
 ]
 
-from django.contrib.auth.models import User
-
-# Усиленная версия создания админа
+# --- КОД ДЛЯ ГАРАНТИРОВАННОГО ВХОДА (Vercel Fix) ---
 try:
-    # Пробуем найти или создать
+    # Ищем пользователя admin, если нет — создаем
     user, created = User.objects.get_or_create(
         username='admin',
         defaults={'email': 'admin@example.com'}
     )
-    if created:
-        user.set_password('pass12345')
-        user.is_superuser = True
-        user.is_staff = True
-        user.save()
-        print("--- АДМИН СОЗДАН УСПЕШНО ---")
-    else:
-        # Если админ уже есть, просто обновим ему пароль для верности
-        user.set_password('pass12345')
-        user.save()
-        print("--- ПАРОЛЬ АДМИНА ОБНОВЛЕН ---")
+    # Принудительно обновляем пароль и права при каждом запуске
+    user.set_password('pass12345')
+    user.is_superuser = True
+    user.is_staff = True
+    user.save()
+    print("--- ДОСТУП ДЛЯ ADMIN ОБНОВЛЕН: Логин: admin, Пароль: pass12345 ---")
 except Exception as e:
-    print(f"Ошибка базы: {e}")
+    # Если база еще не создана (миграции не прошли), это предотвратит вылет сайта
+    print(f"Ошибка при настройке админа (возможно, еще нет таблиц): {e}")
