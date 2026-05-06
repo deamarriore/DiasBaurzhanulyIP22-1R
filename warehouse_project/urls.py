@@ -15,7 +15,6 @@ urlpatterns = [
     path("", RedirectView.as_view(url="/accounting/", permanent=False)),
 ]
 
-# ФИНАЛЬНЫЙ СКРИПТ ПОДГОТОВКИ БАЗЫ (ДЛЯ VERCEL)
 def initialize_database():
     try:
         # 1. ПРИНУДИТЕЛЬНО создаем таблицы в базе /tmp/db.sqlite3
