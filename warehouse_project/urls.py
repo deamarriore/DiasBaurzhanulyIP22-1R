@@ -17,10 +17,25 @@ urlpatterns = [
     path("", RedirectView.as_view(url="/accounting/", permanent=False)),
 ]
 
-# Код для автоматического создания администратора при запуске на Vercel
+from django.contrib.auth.models import User
+
+# Усиленная версия создания админа
 try:
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser('admin', 'admin@example.com', 'pass12345')
-        print("Суперпользователь создан!")
+    # Пробуем найти или создать
+    user, created = User.objects.get_or_create(
+        username='admin',
+        defaults={'email': 'admin@example.com'}
+    )
+    if created:
+        user.set_password('pass12345')
+        user.is_superuser = True
+        user.is_staff = True
+        user.save()
+        print("--- АДМИН СОЗДАН УСПЕШНО ---")
+    else:
+        # Если админ уже есть, просто обновим ему пароль для верности
+        user.set_password('pass12345')
+        user.save()
+        print("--- ПАРОЛЬ АДМИНА ОБНОВЛЕН ---")
 except Exception as e:
-    print(f"Ошибка при создании пользователя: {e}")
+    print(f"Ошибка базы: {e}")
