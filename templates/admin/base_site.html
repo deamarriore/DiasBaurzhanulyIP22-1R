@@ -1,0 +1,76 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        :root{
+            --bg-color: #D1D7C4;
+            --surface: rgba(242, 232, 207, 0.94);
+            --surface-strong: #F2E8CF;
+            --text-strong: #3E382F;
+            --text-muted: #6B5A4C;
+            --accent: #A98467;
+            --accent-soft: #B68E72;
+            --button-text: #2F2414;
+            --border-soft: rgba(169, 132, 103, 0.24);
+            --shadow-soft: 0 18px 40px rgba(46, 41, 34, 0.12);
+        }
+        body {
+            background: linear-gradient(180deg, #ECE7D8 0%, #D1D7C4 100%);
+            color: var(--text-strong);
+        }
+        #header {
+            background: rgba(242, 232, 207, 0.94);
+            border-bottom: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-soft);
+        }
+        #sidebar {
+            background: linear-gradient(180deg, rgba(242,232,207,0.98), rgba(209,215,196,0.92));
+            border-right: 1px solid var(--border-soft);
+        }
+        .module {
+            background: linear-gradient(180deg, rgba(242,232,207,0.98), rgba(209,215,196,0.92));
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            box-shadow: var(--shadow-soft);
+        }
+        .module h2 {
+            background: transparent;
+            color: var(--text-strong);
+            border-bottom: 1px solid var(--border-soft);
+        }
+        .module table {
+            background: transparent;
+        }
+        .module table tbody tr:hover {
+            background: rgba(169, 132, 103, 0.08);
+        }
+        a {
+            color: var(--accent);
+        }
+        a:hover {
+            color: var(--accent-soft);
+        }
+        input[type="text"], input[type="password"], input[type="email"], textarea, select {
+            background: rgba(255,255,255,0.72);
+            border: 1px solid var(--border-soft);
+            border-radius: 8px;
+            color: var(--text-strong);
+        }
+        input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, textarea:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(169,132,103,0.14);
+        }
+        .button, input[type="submit"] {
+            background: linear-gradient(145deg, #F5E5D1 0%, #E9D4B8 100%);
+            border: 1px solid var(--accent);
+            color: var(--text-strong);
+            border-radius: 8px;
+            padding: 8px 16px;
+        }
+        .button:hover, input[type="submit"]:hover {
+            background: linear-gradient(145deg, #E8D2B9 0%, #D1BA9A 100%);
+        }
+    </style>
+{% endblock %}

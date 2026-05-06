@@ -22,4 +22,6 @@ urlpatterns = [
     path("reports/general-ledger/", views.report_general_ledger, name="report_general_ledger"),
     path("reports/pnl/", views.report_pnl, name="report_pnl"),
     path("reports/balance-sheet/", views.report_balance_sheet, name="report_balance_sheet"),
+    path("calculator/", views.calculator, name="calculator"),
+    path("users/", views.users_list, name="users_list"),
 ]

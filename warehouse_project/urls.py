@@ -7,21 +7,20 @@ from django.urls import include, path
 from django.views.generic import RedirectView
 from django.contrib.auth.models import User
 from django.core.management import call_command # Нужно для запуска миграций
+from accounting import views as accounting_views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("django.contrib.auth.urls")),
+    path("register/", accounting_views.register, name="register"),
     path("accounting/", include("accounting.urls")),
     path("", RedirectView.as_view(url="/accounting/", permanent=False)),
 ]
 
 def initialize_database():
     try:
-        # 1. ПРИНУДИТЕЛЬНО создаем таблицы в базе /tmp/db.sqlite3
-        # Это создает структуру таблиц, если их еще нет
         call_command('migrate', interactive=False)
         
-        # 2. Создаем или обновляем админа
         if not User.objects.filter(username='admin').exists():
             User.objects.create_superuser(
                 username='admin', 
@@ -40,5 +39,4 @@ def initialize_database():
     except Exception as e:
         print(f"--- ОШИБКА БАЗЫ: {e} ---")
 
-# Запускаем инициализацию
 initialize_database()

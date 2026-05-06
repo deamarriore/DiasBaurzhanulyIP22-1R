@@ -3,6 +3,7 @@ from datetime import date, datetime
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -11,6 +12,7 @@ from accounting.forms import (
     CashOperationForm,
     PurchaseInvoiceForm,
     PurchaseInvoiceLineFormSet,
+    RegistrationForm,
     SalesInvoiceForm,
     SalesInvoiceLineFormSet,
 )
@@ -351,3 +353,41 @@ def report_balance_sheet(request):
         "accounting/report_balance_sheet.html",
         {"data": data, "as_of": as_of},
     )
+
+
+def register(request):
+    """Страница регистрации"""
+    if request.user.is_authenticated:
+        return redirect("accounting:dashboard")
+    
+    if request.method == "POST":
+        form = RegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Регистрация успешна! Теперь вы можете войти.")
+            return redirect("login")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = RegistrationForm()
+    
+    return render(request, "accounting/register.html", {"form": form})
+
+
+@login_required
+def users_list(request):
+    """Список пользователей"""
+    users = User.objects.all().order_by("date_joined")
+    context = {
+        "users": users,
+        "total_users": users.count(),
+    }
+    return render(request, "accounting/users_list.html", context)
+
+
+@login_required
+def calculator(request):
+    """Встроенный бухгалтерский калькулятор"""
+    return render(request, "accounting/calculator.html")

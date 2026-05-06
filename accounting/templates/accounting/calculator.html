@@ -1,0 +1,401 @@
+{% extends "accounting/base.html" %}
+{% block title %}Бухгалтерский калькулятор{% endblock %}
+{% block content %}
+<style>
+    .calc-section {
+        background: linear-gradient(180deg, rgba(242,232,207,0.98), rgba(209,215,196,0.92));
+        border: 1px solid rgba(169, 132, 103, 0.24);
+        border-radius: 28px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 18px 40px rgba(46, 41, 34, 0.12), inset 0 1px 0 rgba(255,255,255,0.55);
+    }
+    .calc-result {
+        background: rgba(169, 132, 103, 0.08);
+        border-left: 4px solid #A98467;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    .calc-result strong {
+        color: #A98467;
+        font-size: 1.3rem;
+    }
+    .tabs-nav {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    .tab-btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 999px;
+        border: 1px solid rgba(169, 132, 103, 0.45);
+        background: rgba(255,255,255,0.52);
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.22s ease;
+    }
+    .tab-btn.active {
+        background: linear-gradient(145deg, #F5E5D1 0%, #E9D4B8 100%);
+        border-color: #A98467;
+    }
+    .tab-btn:hover {
+        border-color: #A98467;
+    }
+    .tab-content {
+        display: none;
+    }
+    .tab-content.active {
+        display: block;
+    }
+</style>
+
+<h1 class="hero-line mb-4">Бухгалтерский калькулятор</h1>
+
+<div class="tabs-nav">
+    <button class="tab-btn active" onclick="showTab('vat')">НДС</button>
+    <button class="tab-btn" onclick="showTab('depreciation')">Амортизация</button>
+    <button class="tab-btn" onclick="showTab('profit')">Прибыль</button>
+    <button class="tab-btn" onclick="showTab('discount')">Скидки</button>
+    <button class="tab-btn" onclick="showTab('wages')">Зарплаты</button>
+    <button class="tab-btn" onclick="showTab('cashflow')">Денежный поток</button>
+</div>
+
+<!-- НДС калькулятор -->
+<div id="vat" class="tab-content active">
+    <div class="calc-section">
+        <h3>Расчет НДС</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Сумма без НДС</label>
+                    <input type="number" class="form-control" id="vat_amount" placeholder="0" step="0.01" value="1000">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Ставка НДС (%)</label>
+                    <select class="form-select" id="vat_rate">
+                        <option value="0">0%</option>
+                        <option value="10">10%</option>
+                        <option value="18" selected>18%</option>
+                        <option value="20">20%</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="calculateVAT()">Рассчитать</button>
+        <div id="vat_result" class="calc-result" style="display:none;">
+            <p>Сумма без НДС: <strong id="vat_without"></strong> ₽</p>
+            <p>Размер НДС: <strong id="vat_amount_calc"></strong> ₽</p>
+            <p>Итого с НДС: <strong id="vat_total"></strong> ₽</p>
+        </div>
+    </div>
+</div>
+
+<!-- Амортизация -->
+<div id="depreciation" class="tab-content">
+    <div class="calc-section">
+        <h3>Расчет амортизации (Прямолинейный метод)</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Первоначальная стоимость (₽)</label>
+                    <input type="number" class="form-control" id="initial_cost" placeholder="0" step="0.01" value="100000">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Ликвидационная стоимость (₽)</label>
+                    <input type="number" class="form-control" id="salvage_value" placeholder="0" step="0.01" value="10000">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Срок полезного использования (лет)</label>
+                    <input type="number" class="form-control" id="useful_life" placeholder="0" step="1" value="5">
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="calculateDepreciation()">Рассчитать</button>
+        <div id="depreciation_result" class="calc-result" style="display:none;">
+            <p>Амортизируемая база: <strong id="depreciable_base"></strong> ₽</p>
+            <p>Годовая амортизация: <strong id="annual_depreciation"></strong> ₽</p>
+            <p>Месячная амортизация: <strong id="monthly_depreciation"></strong> ₽</p>
+        </div>
+    </div>
+</div>
+
+<!-- Прибыль -->
+<div id="profit" class="tab-content">
+    <div class="calc-section">
+        <h3>Расчет прибыли</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Выручка (₽)</label>
+                    <input type="number" class="form-control" id="revenue" placeholder="0" step="0.01" value="1000000">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Себестоимость (₽)</label>
+                    <input type="number" class="form-control" id="cost_of_goods" placeholder="0" step="0.01" value="600000">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Операционные расходы (₽)</label>
+                    <input type="number" class="form-control" id="operating_expenses" placeholder="0" step="0.01" value="200000">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Процентные расходы (₽)</label>
+                    <input type="number" class="form-control" id="interest_expense" placeholder="0" step="0.01" value="50000">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Налог на прибыль (%)</label>
+                    <input type="number" class="form-control" id="tax_rate" placeholder="0" step="0.01" value="20">
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="calculateProfit()">Рассчитать</button>
+        <div id="profit_result" class="calc-result" style="display:none;">
+            <p>Валовая прибыль: <strong id="gross_profit"></strong> ₽</p>
+            <p>Операционная прибыль: <strong id="operating_profit"></strong> ₽</p>
+            <p>Прибыль до налогов: <strong id="profit_before_tax"></strong> ₽</p>
+            <p>Налог на прибыль: <strong id="income_tax"></strong> ₽</p>
+            <p>Чистая прибыль: <strong id="net_profit"></strong> ₽</p>
+            <p>Маржа прибыли: <strong id="profit_margin"></strong> %</p>
+        </div>
+    </div>
+</div>
+
+<!-- Скидки -->
+<div id="discount" class="tab-content">
+    <div class="calc-section">
+        <h3>Расчет скидок</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Исходная цена (₽)</label>
+                    <input type="number" class="form-control" id="original_price" placeholder="0" step="0.01" value="1000">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Размер скидки (%)</label>
+                    <input type="number" class="form-control" id="discount_percent" placeholder="0" step="0.01" value="10">
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="calculateDiscount()">Рассчитать</button>
+        <div id="discount_result" class="calc-result" style="display:none;">
+            <p>Размер скидки: <strong id="discount_amount"></strong> ₽</p>
+            <p>Цена после скидки: <strong id="final_price"></strong> ₽</p>
+        </div>
+    </div>
+</div>
+
+<!-- Зарплаты -->
+<div id="wages" class="tab-content">
+    <div class="calc-section">
+        <h3>Расчет зарплаты</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Оклад (₽)</label>
+                    <input type="number" class="form-control" id="salary" placeholder="0" step="0.01" value="50000">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Подоходный налог (%)</label>
+                    <input type="number" class="form-control" id="income_tax_rate" placeholder="0" step="0.01" value="13">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Социальные взносы (%)</label>
+                    <input type="number" class="form-control" id="social_contributions_rate" placeholder="0" step="0.01" value="35.3">
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="calculateWages()">Рассчитать</button>
+        <div id="wages_result" class="calc-result" style="display:none;">
+            <p>Брутто зарплата: <strong id="gross_salary"></strong> ₽</p>
+            <p>НДФЛ: <strong id="employee_tax"></strong> ₽</p>
+            <p>Чистая зарплата (на руки): <strong id="net_salary"></strong> ₽</p>
+            <p>Страховые взносы работодателя: <strong id="employer_contributions"></strong> ₽</p>
+            <p>Полная стоимость сотрудника: <strong id="total_cost"></strong> ₽</p>
+        </div>
+    </div>
+</div>
+
+<!-- Денежный поток -->
+<div id="cashflow" class="tab-content">
+    <div class="calc-section">
+        <h3>Анализ денежного потока</h3>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Начальный баланс (₽)</label>
+                    <input type="number" class="form-control" id="opening_balance" placeholder="0" step="0.01" value="100000">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Входящие платежи (₽)</label>
+                    <input type="number" class="form-control" id="inflows" placeholder="0" step="0.01" value="500000">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label class="form-label">Исходящие платежи (₽)</label>
+                    <input type="number" class="form-control" id="outflows" placeholder="0" step="0.01" value="300000">
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary" onclick="calculateCashflow()">Рассчитать</button>
+        <div id="cashflow_result" class="calc-result" style="display:none;">
+            <p>Операционный денежный поток: <strong id="operating_cashflow"></strong> ₽</p>
+            <p>Конечный баланс: <strong id="closing_balance"></strong> ₽</p>
+            <p>Изменение: <strong id="cash_change"></strong> ₽</p>
+        </div>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Скрыть все вкладки
+    const contents = document.querySelectorAll('.tab-content');
+    contents.forEach(content => content.classList.remove('active'));
+    
+    // Деактивировать все кнопки
+    const buttons = document.querySelectorAll('.tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Показать выбранную вкладку
+    document.getElementById(tabName).classList.add('active');
+    
+    // Активировать кнопку
+    event.target.classList.add('active');
+}
+
+function formatNumber(num) {
+    return parseFloat(num).toLocaleString('ru-RU', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
+function calculateVAT() {
+    const amount = parseFloat(document.getElementById('vat_amount').value) || 0;
+    const rate = parseFloat(document.getElementById('vat_rate').value) || 0;
+    
+    const vat = amount * (rate / 100);
+    const total = amount + vat;
+    
+    document.getElementById('vat_without').textContent = formatNumber(amount);
+    document.getElementById('vat_amount_calc').textContent = formatNumber(vat);
+    document.getElementById('vat_total').textContent = formatNumber(total);
+    document.getElementById('vat_result').style.display = 'block';
+}
+
+function calculateDepreciation() {
+    const initialCost = parseFloat(document.getElementById('initial_cost').value) || 0;
+    const salvageValue = parseFloat(document.getElementById('salvage_value').value) || 0;
+    const usefulLife = parseFloat(document.getElementById('useful_life').value) || 1;
+    
+    const depreciableBase = initialCost - salvageValue;
+    const annualDepreciation = depreciableBase / usefulLife;
+    const monthlyDepreciation = annualDepreciation / 12;
+    
+    document.getElementById('depreciable_base').textContent = formatNumber(depreciableBase);
+    document.getElementById('annual_depreciation').textContent = formatNumber(annualDepreciation);
+    document.getElementById('monthly_depreciation').textContent = formatNumber(monthlyDepreciation);
+    document.getElementById('depreciation_result').style.display = 'block';
+}
+
+function calculateProfit() {
+    const revenue = parseFloat(document.getElementById('revenue').value) || 0;
+    const cogs = parseFloat(document.getElementById('cost_of_goods').value) || 0;
+    const opEx = parseFloat(document.getElementById('operating_expenses').value) || 0;
+    const interestExp = parseFloat(document.getElementById('interest_expense').value) || 0;
+    const taxRate = parseFloat(document.getElementById('tax_rate').value) || 0;
+    
+    const grossProfit = revenue - cogs;
+    const operatingProfit = grossProfit - opEx;
+    const profitBeforeTax = operatingProfit - interestExp;
+    const incomeTax = profitBeforeTax * (taxRate / 100);
+    const netProfit = profitBeforeTax - incomeTax;
+    const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+    
+    document.getElementById('gross_profit').textContent = formatNumber(grossProfit);
+    document.getElementById('operating_profit').textContent = formatNumber(operatingProfit);
+    document.getElementById('profit_before_tax').textContent = formatNumber(profitBeforeTax);
+    document.getElementById('income_tax').textContent = formatNumber(incomeTax);
+    document.getElementById('net_profit').textContent = formatNumber(netProfit);
+    document.getElementById('profit_margin').textContent = formatNumber(margin);
+    document.getElementById('profit_result').style.display = 'block';
+}
+
+function calculateDiscount() {
+    const originalPrice = parseFloat(document.getElementById('original_price').value) || 0;
+    const discountPercent = parseFloat(document.getElementById('discount_percent').value) || 0;
+    
+    const discountAmount = originalPrice * (discountPercent / 100);
+    const finalPrice = originalPrice - discountAmount;
+    
+    document.getElementById('discount_amount').textContent = formatNumber(discountAmount);
+    document.getElementById('final_price').textContent = formatNumber(finalPrice);
+    document.getElementById('discount_result').style.display = 'block';
+}
+
+function calculateWages() {
+    const salary = parseFloat(document.getElementById('salary').value) || 0;
+    const incomeTaxRate = parseFloat(document.getElementById('income_tax_rate').value) || 0;
+    const socialContribRate = parseFloat(document.getElementById('social_contributions_rate').value) || 0;
+    
+    const employeeTax = salary * (incomeTaxRate / 100);
+    const netSalary = salary - employeeTax;
+    const employerContributions = salary * (socialContribRate / 100);
+    const totalCost = salary + employerContributions;
+    
+    document.getElementById('gross_salary').textContent = formatNumber(salary);
+    document.getElementById('employee_tax').textContent = formatNumber(employeeTax);
+    document.getElementById('net_salary').textContent = formatNumber(netSalary);
+    document.getElementById('employer_contributions').textContent = formatNumber(employerContributions);
+    document.getElementById('total_cost').textContent = formatNumber(totalCost);
+    document.getElementById('wages_result').style.display = 'block';
+}
+
+function calculateCashflow() {
+    const openingBalance = parseFloat(document.getElementById('opening_balance').value) || 0;
+    const inflows = parseFloat(document.getElementById('inflows').value) || 0;
+    const outflows = parseFloat(document.getElementById('outflows').value) || 0;
+    
+    const operatingCashflow = inflows - outflows;
+    const closingBalance = openingBalance + operatingCashflow;
+    const change = closingBalance - openingBalance;
+    
+    document.getElementById('operating_cashflow').textContent = formatNumber(operatingCashflow);
+    document.getElementById('closing_balance').textContent = formatNumber(closingBalance);
+    document.getElementById('cash_change').textContent = formatNumber(change);
+    document.getElementById('cashflow_result').style.display = 'block';
+}
+
+// Автоматический расчет при загрузке
+window.addEventListener('load', () => {
+    calculateVAT();
+    calculateDepreciation();
+    calculateProfit();
+    calculateDiscount();
+    calculateWages();
+    calculateCashflow();
+});
+</script>
+{% endblock %}
