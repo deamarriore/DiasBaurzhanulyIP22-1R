@@ -8,7 +8,7 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
-from django.contrib.auth.models import User  # Импорт для работы с пользователями
+from django.contrib.auth.models import User # Импорт для создания пользователя
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -17,19 +17,23 @@ urlpatterns = [
     path("", RedirectView.as_view(url="/accounting/", permanent=False)),
 ]
 
-# --- КОД ДЛЯ ГАРАНТИРОВАННОГО ВХОДА (Vercel Fix) ---
+# АВТОМАТИЧЕСКОЕ СОЗДАНИЕ АДМИНА
+# Этот код сработает сразу после запуска сервера на Vercel
 try:
-    # Ищем пользователя admin, если нет — создаем
-    user, created = User.objects.get_or_create(
-        username='admin',
-        defaults={'email': 'admin@example.com'}
-    )
-    # Принудительно обновляем пароль и права при каждом запуске
-    user.set_password('pass12345')
-    user.is_superuser = True
-    user.is_staff = True
-    user.save()
-    print("--- ДОСТУП ДЛЯ ADMIN ОБНОВЛЕН: Логин: admin, Пароль: pass12345 ---")
+    # Проверяем, есть ли уже такой пользователь, чтобы не создавать дубликат
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser(
+            username='admin', 
+            email='admin@example.com', 
+            password='pass12345'
+        )
+        print("Суперпользователь успешно создан!")
+    else:
+        # Если пользователь есть, на всякий случай обновляем пароль
+        user = User.objects.get(username='admin')
+        user.set_password('pass12345')
+        user.save()
+        print("Пароль администратора обновлен!")
 except Exception as e:
-    # Если база еще не создана (миграции не прошли), это предотвратит вылет сайта
-    print(f"Ошибка при настройке админа (возможно, еще нет таблиц): {e}")
+    # Если таблицы еще не созданы миграциями, просто пропускаем ошибку
+    print(f"Ошибка при настройке админа: {e}")
