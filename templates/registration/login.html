@@ -1,0 +1,21 @@
+{% extends "accounting/base.html" %}
+{% block title %}Вход{% endblock %}
+{% block content %}
+<h1 class="mb-3">Вход</h1>
+{% if form.errors %}
+    <div class="alert alert-danger">Неверный логин или пароль.</div>
+{% endif %}
+<form method="post" action="{% url 'login' %}" class="card shadow-sm p-4" style="max-width:420px;">
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    <div class="mb-3">
+        <label class="form-label" for="id_username">Имя пользователя</label>
+        <input type="text" name="username" id="id_username" class="form-control" required autofocus>
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="id_password">Пароль</label>
+        <input type="password" name="password" id="id_password" class="form-control" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Войти</button>
+</form>
+{% endblock %}

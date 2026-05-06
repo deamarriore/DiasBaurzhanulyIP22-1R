@@ -1,0 +1,25 @@
+{% extends "accounting/base.html" %}
+{% block title %}ОПУ{% endblock %}
+{% block content %}
+<h1 class="mb-3">Отчёт о прибылях и убытках (демо)</h1>
+<form method="get" class="row g-2 align-items-end no-print mb-3">
+    <div class="col-auto">
+        <label class="form-label">С</label>
+        <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="form-control">
+    </div>
+    <div class="col-auto">
+        <label class="form-label">По</label>
+        <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Показать</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Печать</button>
+    </div>
+</form>
+
+<div class="card shadow-sm p-4">
+    <p><strong>Доходы:</strong> {{ income }}</p>
+    <p><strong>Расходы:</strong> {{ expense }}</p>
+    <p class="mb-0"><strong>Прибыль:</strong> {{ profit }}</p>
+</div>
+{% endblock %}

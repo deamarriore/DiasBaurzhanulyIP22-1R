@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Бухгалтерия{% endblock %} — Склад</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root{
+            --page-bg: #f6f7fb;
+            --card-bg: #ffffff;
+            --text-strong: #111827;
+            --text-muted: #6b7280;
+            --border-soft: rgba(17, 24, 39, 0.08);
+            --shadow-soft: 0 10px 30px rgba(17, 24, 39, 0.08);
+        }
+        body{
+            background: var(--page-bg);
+            color: var(--text-strong);
+        }
+        .navbar{
+            background: rgba(255, 255, 255, 0.78) !important;
+            border-bottom: 1px solid var(--border-soft);
+            backdrop-filter: blur(10px);
+        }
+        .navbar .navbar-brand{ color: var(--text-strong) !important; font-weight: 700; letter-spacing: .2px; }
+        .navbar .nav-link{ color: rgba(17, 24, 39, 0.72) !important; }
+        .navbar .nav-link:hover{ color: rgba(17, 24, 39, 0.92) !important; }
+        .navbar .dropdown-menu{
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-soft);
+            border-radius: 14px;
+        }
+        .card{
+            border: 1px solid var(--border-soft);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(17, 24, 39, 0.06);
+            background: var(--card-bg);
+        }
+        .card-header{
+            background: transparent;
+            border-bottom: 1px solid var(--border-soft);
+            font-weight: 600;
+        }
+        .table{
+            --bs-table-bg: transparent;
+        }
+        .table > :not(caption) > * > *{
+            border-bottom-color: var(--border-soft);
+        }
+        .badge{ font-weight: 600; }
+        .btn{
+            border-radius: 12px;
+        }
+        .btn-primary{
+            background: #111827;
+            border-color: #111827;
+        }
+        .btn-primary:hover{
+            background: #0b1220;
+            border-color: #0b1220;
+        }
+        .btn-outline-primary{
+            color: #111827;
+            border-color: rgba(17, 24, 39, 0.28);
+        }
+        .btn-outline-primary:hover{
+            background: rgba(17, 24, 39, 0.08);
+            border-color: rgba(17, 24, 39, 0.28);
+            color: #111827;
+        }
+        .text-muted{ color: var(--text-muted) !important; }
+        a{ text-decoration: none; }
+        a:hover{ text-decoration: underline; text-underline-offset: 3px; }
+        @media print {
+            .no-print { display: none !important; }
+            a { text-decoration: none; color: inherit; }
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg no-print mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{% url 'accounting:dashboard' %}">МСБ: склад + бухгалтерия</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMain">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounting:dashboard' %}">Дашборд</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounting:account_list' %}">Счета</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounting:journal_list' %}">Журнал</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounting:sales_list' %}">Реализация</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounting:purchase_list' %}">Закупки</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'accounting:cash_list' %}">Касса</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Отчёты</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'accounting:report_trial_balance' %}">Оборотно-сальдовая</a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounting:report_general_ledger' %}">Главная книга</a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounting:report_pnl' %}">ОПУ (P&amp;L)</a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounting:report_balance_sheet' %}">Баланс</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item"><a class="nav-link" href="/admin/">Админка</a></li>
+            </ul>
+            <ul class="navbar-nav">
+                {% if user.is_authenticated %}
+                    <li class="nav-item"><span class="navbar-text me-2" style="color: rgba(17, 24, 39, 0.7)">{{ user.username }}</span></li>
+                    <li class="nav-item">
+                        <form action="{% url 'logout' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-primary btn-sm">Выход</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Вход</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container mb-5">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends "accounting/base.html" %}
+{% block title %}Главная книга{% endblock %}
+{% block content %}
+<h1 class="mb-3">Главная книга (карточка счёта)</h1>
+<form method="get" class="row g-2 align-items-end no-print mb-3">
+    <div class="col-md-4">
+        <label class="form-label">Счёт</label>
+        <select name="account" class="form-select">
+            <option value="">— выберите —</option>
+            {% for a in accounts %}
+                <option value="{{ a.pk }}" {% if account and account.pk == a.pk %}selected{% endif %}>{{ a.code }} {{ a.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label">С</label>
+        <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="form-control">
+    </div>
+    <div class="col-auto">
+        <label class="form-label">По</label>
+        <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Показать</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Печать</button>
+    </div>
+</form>
+
+{% if account %}
+<h5>{{ account.code }} {{ account.name }}</h5>
+<div class="table-responsive card shadow-sm">
+    <table class="table table-sm mb-0">
+        <thead><tr><th>Дата</th><th>Проводка</th><th>Дебет</th><th>Кредит</th><th>Сальдо</th></tr></thead>
+        <tbody>
+        {% for row in ledger_rows %}
+            <tr>
+                <td>{{ row.row_date }}</td>
+                <td>{{ row.entry_number }}</td>
+                <td>{{ row.debit }}</td>
+                <td>{{ row.credit }}</td>
+                <td>{{ row.balance }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-muted">Нет движений</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<p class="text-muted">Выберите счёт.</p>
+{% endif %}
+{% endblock %}

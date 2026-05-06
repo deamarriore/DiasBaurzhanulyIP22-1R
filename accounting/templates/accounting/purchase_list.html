@@ -1,0 +1,31 @@
+{% extends "accounting/base.html" %}
+{% block title %}Закупки{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Закупки</h1>
+    <a class="btn btn-primary" href="{% url 'accounting:purchase_create' %}">Новая</a>
+</div>
+<div class="table-responsive card">
+    <table class="table table-hover align-middle mb-0">
+        <thead><tr><th>Номер</th><th>Дата</th><th>Поставщик</th><th>Статус</th></tr></thead>
+        <tbody>
+        {% for i in invoices %}
+            <tr>
+                <td><a href="{% url 'accounting:purchase_detail' i.pk %}">{{ i.number }}</a></td>
+                <td class="text-muted">{{ i.date }}</td>
+                <td>{{ i.counterparty }}</td>
+                <td>
+                    {% if i.is_posted %}
+                        <span class="badge text-bg-light border">Проведён</span>
+                    {% else %}
+                        <span class="badge text-bg-light border">Черновик</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="4" class="text-muted">Нет документов</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "accounting/base.html" %}
+{% block title %}Проводка {{ entry.number }}{% endblock %}
+{% block content %}
+<h1 class="mb-3">Проводка {{ entry.number }}</h1>
+<p>{{ entry.date }} — {{ entry.description }}</p>
+<div class="table-responsive card shadow-sm">
+    <table class="table mb-0">
+        <thead><tr><th>Счёт</th><th>Дебет</th><th>Кредит</th><th>Примечание</th></tr></thead>
+        <tbody>
+        {% for ln in entry.lines.all %}
+            <tr>
+                <td>{{ ln.account.code }} {{ ln.account.name }}</td>
+                <td>{{ ln.debit }}</td>
+                <td>{{ ln.credit }}</td>
+                <td>{{ ln.description }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<a class="btn btn-secondary mt-3 no-print" href="{% url 'accounting:journal_list' %}">Назад</a>
+<button type="button" class="btn btn-outline-primary mt-3 no-print" onclick="window.print()">Печать</button>
+{% endblock %}

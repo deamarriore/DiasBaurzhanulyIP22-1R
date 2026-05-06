@@ -1,0 +1,17 @@
+{% extends "accounting/base.html" %}
+{% block title %}План счетов{% endblock %}
+{% block content %}
+<h1 class="mb-3">План счетов</h1>
+<div class="table-responsive card shadow-sm">
+    <table class="table table-striped mb-0">
+        <thead><tr><th>Код</th><th>Наименование</th><th>Тип</th></tr></thead>
+        <tbody>
+        {% for a in accounts %}
+            <tr><td>{{ a.code }}</td><td>{{ a.name }}</td><td>{{ a.get_account_type_display }}</td></tr>
+        {% empty %}
+            <tr><td colspan="3" class="text-muted">Нет счетов — выполните <code>python manage.py init_accounting</code>.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

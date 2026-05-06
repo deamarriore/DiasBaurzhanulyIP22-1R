@@ -1,0 +1,95 @@
+{% extends "accounting/base.html" %}
+{% block title %}Дашборд{% endblock %}
+{% block content %}
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+    <div>
+        <h1 class="mb-1">Дашборд</h1>
+        <p class="text-muted mb-0">Демо-модуль бухгалтерии (двойная запись). Период прибыли: {{ month_from }} — {{ month_to }}.</p>
+    </div>
+    <div class="no-print">
+        <a class="btn btn-outline-primary" href="{% url 'accounting:report_trial_balance' %}">ОСВ</a>
+        <a class="btn btn-primary" href="{% url 'accounting:sales_create' %}">Новая реализация</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted mb-1">Прибыль за месяц</div>
+                <div class="display-6 mb-0">{{ profit_month }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="text-muted">Ключевые сальдо</div>
+                    <div class="text-muted small">{{ today }}</div>
+                </div>
+                <ul class="list-unstyled mb-0 small">
+                    {% for row in key_balances %}
+                        <li class="d-flex justify-content-between border-bottom py-2" style="border-color: var(--border-soft) !important;">
+                            <span><strong>{{ row.code }}</strong> <span class="text-muted">{{ row.name }}</span></span>
+                            <span class="fw-semibold">{{ row.amount }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">Последние проводки</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Номер</th><th>Дата</th><th>Описание</th></tr></thead>
+                    <tbody>
+                    {% for e in recent_entries %}
+                        <tr>
+                            <td><a href="{% url 'accounting:journal_detail' e.pk %}">{{ e.number }}</a></td>
+                            <td>{{ e.date }}</td>
+                            <td>{{ e.description|truncatechars:40 }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3" class="text-muted">Нет данных. Выполните <code>python manage.py init_accounting</code>.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Реализации</div>
+            <ul class="list-group list-group-flush">
+                {% for s in recent_sales %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <a href="{% url 'accounting:sales_detail' s.pk %}">{{ s.number }}</a>
+                        <span class="text-muted">{{ s.date }}{% if s.is_posted %} <span class="badge text-bg-light border ms-2">проведён</span>{% endif %}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">Нет реализаций</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-header">Закупки</div>
+            <ul class="list-group list-group-flush">
+                {% for p in recent_purchases %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <a href="{% url 'accounting:purchase_detail' p.pk %}">{{ p.number }}</a>
+                        <span class="text-muted">{{ p.date }}{% if p.is_posted %} <span class="badge text-bg-light border ms-2">проведён</span>{% endif %}</span>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item text-muted">Нет закупок</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

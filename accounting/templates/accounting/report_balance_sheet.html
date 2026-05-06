@@ -1,0 +1,25 @@
+{% extends "accounting/base.html" %}
+{% block title %}Баланс{% endblock %}
+{% block content %}
+<h1 class="mb-3">Баланс (упрощённо, на дату)</h1>
+<form method="get" class="row g-2 align-items-end no-print mb-3">
+    <div class="col-auto">
+        <label class="form-label">На дату</label>
+        <input type="date" name="as_of" value="{{ as_of|date:'Y-m-d' }}" class="form-control">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Показать</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Печать</button>
+    </div>
+</form>
+
+<div class="card shadow-sm p-4">
+    <p><strong>Активы:</strong> {{ data.assets }}</p>
+    <p><strong>Обязательства:</strong> {{ data.liabilities }}</p>
+    <p><strong>Капитал (учётный):</strong> {{ data.equity_plain }}</p>
+    <p><strong>Нераспределённая прибыль (накопл.):</strong> {{ data.retained_earnings }}</p>
+    <p><strong>Капитал итого:</strong> {{ data.equity_total }}</p>
+    <hr>
+    <p class="mb-0 text-muted"><strong>Проверка A − (P + E):</strong> {{ data.check }}</p>
+</div>
+{% endblock %}

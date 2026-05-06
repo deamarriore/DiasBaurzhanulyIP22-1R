@@ -1,0 +1,46 @@
+{% extends "accounting/base.html" %}
+{% block title %}Оборотно-сальдовая{% endblock %}
+{% block content %}
+<h1 class="mb-3">Оборотно-сальдовая ведомость</h1>
+<form method="get" class="row g-2 align-items-end no-print mb-3">
+    <div class="col-auto">
+        <label class="form-label">С</label>
+        <input type="date" name="date_from" value="{{ date_from|date:'Y-m-d' }}" class="form-control">
+    </div>
+    <div class="col-auto">
+        <label class="form-label">По</label>
+        <input type="date" name="date_to" value="{{ date_to|date:'Y-m-d' }}" class="form-control">
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Показать</button>
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()">Печать</button>
+    </div>
+</form>
+
+<div class="table-responsive card shadow-sm">
+    <table class="table table-sm mb-0">
+        <thead>
+        <tr>
+            <th>Счёт</th>
+            <th class="text-end">Вход. сальдо</th>
+            <th class="text-end">Оборот Дт</th>
+            <th class="text-end">Оборот Кт</th>
+            <th class="text-end">Исх. сальдо</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+            <tr>
+                <td>{{ r.account.code }} {{ r.account.name }}</td>
+                <td class="text-end">{{ r.opening }}</td>
+                <td class="text-end">{{ r.debit }}</td>
+                <td class="text-end">{{ r.credit }}</td>
+                <td class="text-end">{{ r.closing }}</td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="5" class="text-muted">Нет оборотов за период</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
