@@ -1,0 +1,36 @@
+{% load static %}
+<div class="card mb-3">
+    <div class="card-body">
+        <h6>Добавить товар</h6>
+        <form hx-post="{% url 'accounting:purchase_add_line' invoice.pk %}"
+              hx-target="#lines-container"
+              hx-swap="innerHTML">
+            {% csrf_token %}
+            <div class="row g-2">
+                <div class="col-md-5">
+                    <label class="form-label">Товар</label>
+                    {{ form.product }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Количество</label>
+                    {{ form.quantity }}
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Цена</label>
+                    {{ form.unit_cost }}
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100">+</button>
+                </div>
+            </div>
+            {% if form.errors %}
+                <div class="text-danger small mt-2">
+                    {% for field, errors in form.errors.items %}
+                        {{ field }}: {% for error in errors %}{{ error }}{% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</div>

@@ -27,26 +27,17 @@
         <h5 class="mb-0">Строки</h5>
         <span class="text-muted small">Товары берутся из склада</span>
     </div>
-    {{ formset.management_form }}
-    <div class="table-responsive card mb-3">
-        <table class="table align-middle mb-0">
-            <thead><tr><th>Товар</th><th>Кол-во</th><th>Цена закупки</th><th>Уд.</th></tr></thead>
-            <tbody>
-            {% for f in formset %}
-                <tr>
-                    {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
-                    <td>{{ f.product }}</td>
-                    <td style="max-width:120px">{{ f.quantity }}</td>
-                    <td style="max-width:140px">{{ f.unit_cost }}</td>
-                    <td>{{ f.DELETE }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
-    <button type="submit" name="save_draft" class="btn btn-outline-primary">Сохранить черновик</button>
-    <button type="submit" name="save_post" class="btn btn-primary">Сохранить и провести</button>
+    
+    {% if invoice %}
+        <!-- Форма добавления строки -->
+        {% include "accounting/purchase_line_form.html" %}
+        
+        <!-- Список строк -->
+        {% include "accounting/purchase_lines.html" %}
+    {% else %}
+        <div class="alert alert-info">Сначала сохраните шапку документа как черновик.</div>
+    {% endif %}
+    <button type="submit" class="btn btn-primary">Сохранить черновик</button>
     <a href="{% url 'accounting:purchase_list' %}" class="btn btn-link">Отмена</a>
 </form>
 {% endblock %}

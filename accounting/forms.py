@@ -26,6 +26,10 @@ class SalesInvoiceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _bootstrap_form_controls(self)
+        # Ограничить контрагентов покупателями
+        self.fields['counterparty'].queryset = self.fields['counterparty'].queryset.filter(
+            kind__in=['customer', 'both']
+        )
 
 
 SalesInvoiceLineFormSet = inlineformset_factory(
@@ -54,6 +58,10 @@ class PurchaseInvoiceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _bootstrap_form_controls(self)
+        # Ограничить контрагентов поставщиками
+        self.fields['counterparty'].queryset = self.fields['counterparty'].queryset.filter(
+            kind__in=['supplier', 'both']
+        )
 
 
 PurchaseInvoiceLineFormSet = inlineformset_factory(
@@ -89,6 +97,19 @@ class CashOperationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _bootstrap_form_controls(self)
+        # Сделать counterparty обязательным для определенных типов
+        if self.instance and self.instance.kind in ['customer_receipt', 'supplier_payment']:
+            self.fields['counterparty'].required = True
+            if self.instance.kind == 'customer_receipt':
+                self.fields['counterparty'].queryset = self.fields['counterparty'].queryset.filter(
+                    kind__in=['customer', 'both']
+                )
+            elif self.instance.kind == 'supplier_payment':
+                self.fields['counterparty'].queryset = self.fields['counterparty'].queryset.filter(
+                    kind__in=['supplier', 'both']
+                )
+        else:
+            self.fields['counterparty'].required = False
 
 
 class RegistrationForm(UserCreationForm):
@@ -98,6 +119,23 @@ class RegistrationForm(UserCreationForm):
 
     class Meta:
         model = User
+        fields = ("username", "email", "first_name", "last_name", "password1", "password2")
+
+
+class PurchaseInvoiceLineForm(forms.ModelForm):
+    """Форма для одной строки закупки с HTMX"""
+    class Meta:
+        model = PurchaseInvoiceLine
+        fields = ["product", "quantity", "unit_cost"]
+        widgets = {
+            "product": forms.Select(attrs={"class": "form-select"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+            "unit_cost": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _bootstrap_form_controls(self)
         fields = ("username", "email", "first_name", "last_name", "password1", "password2")
 
     def __init__(self, *args, **kwargs):

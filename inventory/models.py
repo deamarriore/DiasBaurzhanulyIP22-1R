@@ -64,14 +64,28 @@ class Product(models.Model):
         """Проверяет, ниже ли текущее количество критического остатка"""
         return self.current_quantity < self.min_threshold
     
-    def get_stock_status(self):
-        """Возвращает статус запасов с описанием"""
-        if self.current_quantity == 0:
-            return "❌ На складе нет"
-        elif self.is_low_stock():
-            return f"⚠️  Низкий остаток ({self.current_quantity} шт.)"
-        else:
-            return f"✅ В наличии ({self.current_quantity} шт.)"
+    @property
+    def current_stock(self):
+        """Текущий остаток по партиям"""
+        return sum(batch.quantity_remaining for batch in self.batches.all())
+    
+    def update_stock_from_batches(self):
+        """Обновляет current_quantity из партий"""
+        self.current_quantity = self.current_stock
+        self.save(update_fields=['current_quantity', 'updated_at'])
+    
+    def get_fifo_batches(self, quantity_needed):
+        """Возвращает партии для списания по FIFO"""
+        batches = self.batches.filter(quantity_remaining__gt=0).order_by('received_date')
+        result = []
+        remaining = quantity_needed
+        for batch in batches:
+            if remaining <= 0:
+                break
+            available = min(remaining, batch.quantity_remaining)
+            result.append((batch, available))
+            remaining -= available
+        return result if remaining == 0 else None
 
 
 class StockOperation(models.Model):
@@ -129,4 +143,78 @@ class StockOperation(models.Model):
             self.product.save(update_fields=['current_quantity', 'updated_at'])
         
         # Сохраняем саму операцию
+        super().save(*args, **kwargs)
+
+
+class Batch(models.Model):
+    """Партия товара для учета FIFO"""
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, verbose_name="Товар", related_name='batches')
+    batch_number = models.CharField(max_length=100, unique=True, verbose_name="Номер партии")
+    quantity_received = models.PositiveIntegerField(verbose_name="Количество получено")
+    quantity_remaining = models.PositiveIntegerField(verbose_name="Остаток в партии")
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Цена за единицу")
+    received_date = models.DateField(verbose_name="Дата получения")
+    expiry_date = models.DateField(null=True, blank=True, verbose_name="Срок годности")
+    supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, verbose_name="Поставщик")
+    
+    class Meta:
+        verbose_name = "Партия"
+        verbose_name_plural = "Партии"
+        ordering = ['received_date']
+        indexes = [
+            models.Index(fields=['product', 'received_date']),
+        ]
+    
+    def __str__(self):
+        return f"Партия {self.batch_number} - {self.product.name}"
+    
+    def is_expired(self):
+        """Проверяет, истек ли срок годности"""
+        from datetime import date
+        if self.expiry_date:
+            return self.expiry_date < date.today()
+        return False
+    
+    def get_status(self):
+        """Возвращает статус партии"""
+        if self.is_expired():
+            return "Истек срок"
+        elif self.quantity_remaining == 0:
+            return "Распродана"
+        else:
+            return "Активна"
+
+
+class StockTransaction(models.Model):
+    """Транзакция движения товара (приход/расход)"""
+    TRANSACTION_TYPES = (
+        ('in', 'Приход'),
+        ('out', 'Расход'),
+    )
+    
+    product = models.ForeignKey(Product, on_delete=models.PROTECT, verbose_name="Товар", related_name='stock_transactions')
+    batch = models.ForeignKey(Batch, on_delete=models.PROTECT, null=True, blank=True, verbose_name="Партия")
+    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPES, verbose_name="Тип транзакции")
+    quantity = models.PositiveIntegerField(verbose_name="Количество")
+    unit_cost = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Цена за единицу")
+    total_cost = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True, verbose_name="Общая стоимость")
+    transaction_date = models.DateTimeField(auto_now_add=True, verbose_name="Дата транзакции")
+    reason = models.TextField(blank=True, verbose_name="Причина")
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Выполнил")
+    
+    class Meta:
+        verbose_name = "Транзакция склада"
+        verbose_name_plural = "Транзакции склада"
+        ordering = ['-transaction_date']
+        indexes = [
+            models.Index(fields=['product', '-transaction_date']),
+            models.Index(fields=['batch', '-transaction_date']),
+        ]
+    
+    def __str__(self):
+        return f"{self.get_transaction_type_display()} {self.quantity} {self.product.name}"
+    
+    def save(self, *args, **kwargs):
+        if self.unit_cost and self.quantity:
+            self.total_cost = self.unit_cost * self.quantity
         super().save(*args, **kwargs)

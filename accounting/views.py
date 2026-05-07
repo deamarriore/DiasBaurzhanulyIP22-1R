@@ -1,8 +1,8 @@
 from calendar import monthrange
 from datetime import date, datetime
 
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -11,6 +11,7 @@ from django.utils import timezone
 from accounting.forms import (
     CashOperationForm,
     PurchaseInvoiceForm,
+    PurchaseInvoiceLineForm,
     PurchaseInvoiceLineFormSet,
     RegistrationForm,
     SalesInvoiceForm,
@@ -21,6 +22,7 @@ from accounting.models import (
     CashOperation,
     JournalEntry,
     PurchaseInvoice,
+    PurchaseInvoiceLine,
     SalesInvoice,
 )
 from accounting.services import posting
@@ -189,53 +191,53 @@ def purchase_create(request):
     }
     if request.method == "POST":
         form = PurchaseInvoiceForm(request.POST)
-        formset = PurchaseInvoiceLineFormSet(request.POST)
-        if form.is_valid() and formset.is_valid():
+        if form.is_valid():
             inv = form.save(commit=False)
             inv.created_by = request.user
             inv.save()
-            formset.instance = inv
-            formset.save()
-            if "save_post" in request.POST:
-                try:
-                    posting.post_purchase_invoice(inv, request.user)
-                    messages.success(request, "Документ сохранён и проведён.")
-                except ValidationError as e:
-                    messages.error(request, _validation_messages(e))
-            else:
-                messages.success(request, "Черновик сохранён.")
+            messages.success(request, "Черновик сохранён. Добавьте товары.")
             return redirect("accounting:purchase_detail", pk=inv.pk)
     else:
         form = PurchaseInvoiceForm(initial=initial)
-        formset = PurchaseInvoiceLineFormSet()
     return render(
         request,
         "accounting/purchase_form.html",
-        {"form": form, "formset": formset, "title": "Новая закупка"},
+        {"form": form, "title": "Новая закупка", "invoice": None},
     )
 
 
 @login_required
-def purchase_detail(request, pk):
-    inv = get_object_or_404(PurchaseInvoice.objects.select_related("counterparty", "journal_entry"), pk=pk)
+def purchase_add_line(request, pk):
+    """HTMX view для добавления строки в закупку"""
+    invoice = get_object_or_404(PurchaseInvoice, pk=pk)
+    
     if request.method == "POST":
-        action = request.POST.get("action")
-        try:
-            if action == "post":
-                posting.post_purchase_invoice(inv, request.user)
-                messages.success(request, "Проведено.")
-            elif action == "unpost":
-                posting.unpost_purchase_invoice(inv, request.user)
-                messages.success(request, "Проведение снято.")
-        except ValidationError as e:
-            messages.error(request, _validation_messages(e))
-        return redirect("accounting:purchase_detail", pk=pk)
-    lines = inv.lines.select_related("product")
-    return render(
-        request,
-        "accounting/purchase_detail.html",
-        {"invoice": inv, "lines": lines},
-    )
+        form = PurchaseInvoiceLineForm(request.POST)
+        if form.is_valid():
+            line = form.save(commit=False)
+            line.invoice = invoice
+            line.save()
+            # Возвращаем обновленный список строк
+            lines = invoice.lines.select_related("product")
+            return render(request, "accounting/purchase_lines.html", {"lines": lines})
+    else:
+        form = PurchaseInvoiceLineForm()
+    
+    return render(request, "accounting/purchase_line_form.html", {"form": form, "invoice": invoice})
+
+
+@login_required
+def purchase_remove_line(request, pk, line_pk):
+    """HTMX view для удаления строки из закупки"""
+    invoice = get_object_or_404(PurchaseInvoice, pk=pk)
+    line = get_object_or_404(PurchaseInvoiceLine, pk=line_pk, invoice=invoice)
+    
+    if request.method == "DELETE":
+        line.delete()
+        lines = invoice.lines.select_related("product")
+        return render(request, "accounting/purchase_lines.html", {"lines": lines})
+    
+    return HttpResponse(status=405)
 
 
 @login_required

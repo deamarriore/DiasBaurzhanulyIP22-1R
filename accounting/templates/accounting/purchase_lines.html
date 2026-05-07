@@ -1,0 +1,46 @@
+{% load static %}
+<div id="lines-container">
+    <div class="table-responsive card mb-3">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Товар</th>
+                    <th>Кол-во</th>
+                    <th>Цена</th>
+                    <th>Сумма</th>
+                    <th>Уд.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in lines %}
+                    <tr>
+                        <td>{{ line.product.name }}</td>
+                        <td>{{ line.quantity }}</td>
+                        <td>{{ line.unit_cost }}</td>
+                        <td>{{ line.line_amount }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    hx-delete="{% url 'accounting:purchase_remove_line' line.invoice.pk line.pk %}"
+                                    hx-target="#lines-container"
+                                    hx-swap="innerHTML"
+                                    hx-confirm="Удалить строку?">×</button>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-muted text-center">Нет строк</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            {% if lines %}
+                <tfoot>
+                    <tr class="table-light">
+                        <th colspan="3">Итого</th>
+                        <th>{{ invoice.line_total }}</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            {% endif %}
+        </table>
+    </div>
+</div>

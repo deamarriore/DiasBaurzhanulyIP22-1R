@@ -87,9 +87,9 @@
         </div>
         <button class="btn btn-primary" onclick="calculateVAT()">Рассчитать</button>
         <div id="vat_result" class="calc-result" style="display:none;">
-            <p>Сумма без НДС: <strong id="vat_without"></strong> ₽</p>
-            <p>Размер НДС: <strong id="vat_amount_calc"></strong> ₽</p>
-            <p>Итого с НДС: <strong id="vat_total"></strong> ₽</p>
+            <p>Сумма без НДС: <strong id="vat_without"></strong> ₸</p>
+            <p>Размер НДС: <strong id="vat_amount_calc"></strong> ₸</p>
+            <p>Итого с НДС: <strong id="vat_total"></strong> ₸</p>
         </div>
     </div>
 </div>
@@ -101,13 +101,13 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Первоначальная стоимость (₽)</label>
+                    <label class="form-label">Первоначальная стоимость (₸)</label>
                     <input type="number" class="form-control" id="initial_cost" placeholder="0" step="0.01" value="100000">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Ликвидационная стоимость (₽)</label>
+                    <label class="form-label">Ликвидационная стоимость (₸)</label>
                     <input type="number" class="form-control" id="salvage_value" placeholder="0" step="0.01" value="10000">
                 </div>
             </div>
@@ -120,9 +120,9 @@
         </div>
         <button class="btn btn-primary" onclick="calculateDepreciation()">Рассчитать</button>
         <div id="depreciation_result" class="calc-result" style="display:none;">
-            <p>Амортизируемая база: <strong id="depreciable_base"></strong> ₽</p>
-            <p>Годовая амортизация: <strong id="annual_depreciation"></strong> ₽</p>
-            <p>Месячная амортизация: <strong id="monthly_depreciation"></strong> ₽</p>
+            <p>Амортизируемая база: <strong id="depreciable_base"></strong> ₸</p>
+            <p>Годовая амортизация: <strong id="annual_depreciation"></strong> ₸</p>
+            <p>Месячная амортизация: <strong id="monthly_depreciation"></strong> ₸</p>
         </div>
     </div>
 </div>
@@ -134,19 +134,19 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Выручка (₽)</label>
+                    <label class="form-label">Выручка (₸)</label>
                     <input type="number" class="form-control" id="revenue" placeholder="0" step="0.01" value="1000000">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Себестоимость (₽)</label>
+                    <label class="form-label">Себестоимость (₸)</label>
                     <input type="number" class="form-control" id="cost_of_goods" placeholder="0" step="0.01" value="600000">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Операционные расходы (₽)</label>
+                    <label class="form-label">Операционные расходы (₸)</label>
                     <input type="number" class="form-control" id="operating_expenses" placeholder="0" step="0.01" value="200000">
                 </div>
             </div>
@@ -154,7 +154,7 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Процентные расходы (₽)</label>
+                    <label class="form-label">Процентные расходы (₸)</label>
                     <input type="number" class="form-control" id="interest_expense" placeholder="0" step="0.01" value="50000">
                 </div>
             </div>
@@ -167,11 +167,11 @@
         </div>
         <button class="btn btn-primary" onclick="calculateProfit()">Рассчитать</button>
         <div id="profit_result" class="calc-result" style="display:none;">
-            <p>Валовая прибыль: <strong id="gross_profit"></strong> ₽</p>
-            <p>Операционная прибыль: <strong id="operating_profit"></strong> ₽</p>
-            <p>Прибыль до налогов: <strong id="profit_before_tax"></strong> ₽</p>
-            <p>Налог на прибыль: <strong id="income_tax"></strong> ₽</p>
-            <p>Чистая прибыль: <strong id="net_profit"></strong> ₽</p>
+            <p>Валовая прибыль: <strong id="gross_profit"></strong> ₸</p>
+            <p>Операционная прибыль: <strong id="operating_profit"></strong> ₸</p>
+            <p>Прибыль до налогов: <strong id="profit_before_tax"></strong> ₸</p>
+            <p>Налог на прибыль: <strong id="income_tax"></strong> ₸</p>
+            <p>Чистая прибыль: <strong id="net_profit"></strong> ₸</p>
             <p>Маржа прибыли: <strong id="profit_margin"></strong> %</p>
         </div>
     </div>
@@ -184,7 +184,7 @@
         <div class="row">
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label class="form-label">Исходная цена (₽)</label>
+                    <label class="form-label">Исходная цена (₸)</label>
                     <input type="number" class="form-control" id="original_price" placeholder="0" step="0.01" value="1000">
                 </div>
             </div>
@@ -197,8 +197,8 @@
         </div>
         <button class="btn btn-primary" onclick="calculateDiscount()">Рассчитать</button>
         <div id="discount_result" class="calc-result" style="display:none;">
-            <p>Размер скидки: <strong id="discount_amount"></strong> ₽</p>
-            <p>Цена после скидки: <strong id="final_price"></strong> ₽</p>
+            <p>Размер скидки: <strong id="discount_amount"></strong> ₸</p>
+            <p>Цена после скидки: <strong id="final_price"></strong> ₸</p>
         </div>
     </div>
 </div>
@@ -210,7 +210,7 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Оклад (₽)</label>
+                    <label class="form-label">Оклад (₸)</label>
                     <input type="number" class="form-control" id="salary" placeholder="0" step="0.01" value="50000">
                 </div>
             </div>
@@ -229,11 +229,11 @@
         </div>
         <button class="btn btn-primary" onclick="calculateWages()">Рассчитать</button>
         <div id="wages_result" class="calc-result" style="display:none;">
-            <p>Брутто зарплата: <strong id="gross_salary"></strong> ₽</p>
-            <p>НДФЛ: <strong id="employee_tax"></strong> ₽</p>
-            <p>Чистая зарплата (на руки): <strong id="net_salary"></strong> ₽</p>
-            <p>Страховые взносы работодателя: <strong id="employer_contributions"></strong> ₽</p>
-            <p>Полная стоимость сотрудника: <strong id="total_cost"></strong> ₽</p>
+            <p>Брутто зарплата: <strong id="gross_salary"></strong> ₸</p>
+            <p>НДФЛ: <strong id="employee_tax"></strong> ₸</p>
+            <p>Чистая зарплата (на руки): <strong id="net_salary"></strong> ₸</p>
+            <p>Страховые взносы работодателя: <strong id="employer_contributions"></strong> ₸</p>
+            <p>Полная стоимость сотрудника: <strong id="total_cost"></strong> ₸</p>
         </div>
     </div>
 </div>
@@ -245,28 +245,28 @@
         <div class="row">
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Начальный баланс (₽)</label>
+                    <label class="form-label">Начальный баланс (₸)</label>
                     <input type="number" class="form-control" id="opening_balance" placeholder="0" step="0.01" value="100000">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Входящие платежи (₽)</label>
+                    <label class="form-label">Входящие платежи (₸)</label>
                     <input type="number" class="form-control" id="inflows" placeholder="0" step="0.01" value="500000">
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="mb-3">
-                    <label class="form-label">Исходящие платежи (₽)</label>
+                    <label class="form-label">Исходящие платежи (₸)</label>
                     <input type="number" class="form-control" id="outflows" placeholder="0" step="0.01" value="300000">
                 </div>
             </div>
         </div>
         <button class="btn btn-primary" onclick="calculateCashflow()">Рассчитать</button>
         <div id="cashflow_result" class="calc-result" style="display:none;">
-            <p>Операционный денежный поток: <strong id="operating_cashflow"></strong> ₽</p>
-            <p>Конечный баланс: <strong id="closing_balance"></strong> ₽</p>
-            <p>Изменение: <strong id="cash_change"></strong> ₽</p>
+            <p>Операционный денежный поток: <strong id="operating_cashflow"></strong> ₸</p>
+            <p>Конечный баланс: <strong id="closing_balance"></strong> ₸</p>
+            <p>Изменение: <strong id="cash_change"></strong> ₸</p>
         </div>
     </div>
 </div>
