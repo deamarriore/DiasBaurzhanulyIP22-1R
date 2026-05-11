@@ -6,7 +6,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 from django.contrib.auth.models import User
-from django.core.management import call_command # Нужно для запуска миграций
+from django.core.management import call_command 
 from accounting import views as accounting_views
 
 urlpatterns = [
@@ -14,6 +14,7 @@ urlpatterns = [
     path("accounts/", include("django.contrib.auth.urls")),
     path("register/", accounting_views.register, name="register"),
     path("accounting/", include("accounting.urls")),
+    path("inventory/", include("inventory.urls")),
     path("", RedirectView.as_view(url="/accounting/", permanent=False)),
 ]
 

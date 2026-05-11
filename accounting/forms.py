@@ -30,6 +30,9 @@ class SalesInvoiceForm(forms.ModelForm):
         self.fields['counterparty'].queryset = self.fields['counterparty'].queryset.filter(
             kind__in=['customer', 'both']
         )
+        self.fields['counterparty'].empty_label = 'Выберите покупателя'
+        if not self.fields['counterparty'].queryset.exists():
+            self.fields['counterparty'].help_text = 'Сначала добавьте контрагента с типом Клиент или Клиент и поставщик.'
 
 
 SalesInvoiceLineFormSet = inlineformset_factory(
@@ -62,6 +65,9 @@ class PurchaseInvoiceForm(forms.ModelForm):
         self.fields['counterparty'].queryset = self.fields['counterparty'].queryset.filter(
             kind__in=['supplier', 'both']
         )
+        self.fields['counterparty'].empty_label = 'Выберите поставщика'
+        if not self.fields['counterparty'].queryset.exists():
+            self.fields['counterparty'].help_text = 'Сначала добавьте контрагента с типом Поставщик или Клиент и поставщик.'
 
 
 PurchaseInvoiceLineFormSet = inlineformset_factory(
@@ -136,15 +142,6 @@ class PurchaseInvoiceLineForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _bootstrap_form_controls(self)
-        fields = ("username", "email", "first_name", "last_name", "password1", "password2")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["username"].label = "Логин"
-        self.fields["password1"].label = "Пароль"
-        self.fields["password2"].label = "Подтверждение пароля"
-        for field in self.fields.values():
-            field.widget.attrs.update({"class": "form-control"})
 
     def clean_email(self):
         email = self.cleaned_data.get("email")

@@ -41,6 +41,41 @@
     </div>
 </div>
 
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted mb-1">Товаров на складе</div>
+                <div class="display-6 mb-0">{{ total_inventory_items }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted mb-1">Суммарный остаток</div>
+                <div class="display-6 mb-0">{{ total_inventory_quantity }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted mb-1">Недостаточный запас</div>
+                <div class="display-6 mb-0">{{ low_stock_products_count }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <div class="text-muted mb-1">Стоимость запасов</div>
+                <div class="display-6 mb-0">{{ total_inventory_value }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="card">

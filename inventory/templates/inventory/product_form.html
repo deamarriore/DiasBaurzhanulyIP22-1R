@@ -1,0 +1,36 @@
+{% extends "accounting/base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
+    <div>
+        <h1 class="mb-1">{{ title }}</h1>
+        <p class="text-muted mb-0">Заполните данные по товару и сохраните изменения.</p>
+    </div>
+    <div class="no-print">
+        <a class="btn btn-outline-primary" href="{% url 'inventory:home' %}">Назад к списку</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                {% for field in form %}
+                    <div class="col-md-6">
+                        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}
+                            <div class="text-danger small mt-1">{{ field.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">Сохранить</button>
+                <a class="btn btn-link" href="{% url 'inventory:home' %}">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

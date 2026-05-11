@@ -1,0 +1,171 @@
+{% extends "accounting/base.html" %}
+{% block title %}Склад{% endblock %}
+{% block content %}
+<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-4">
+    <div>
+        <h1 class="mb-1">Склад</h1>
+        <p class="text-muted mb-0">Управление товарами и статистика остатков. Чтобы добавить новый товар на склад, нажмите кнопку <strong>Добавить товар</strong>.</p>
+    </div>
+    <div class="no-print">
+        <a class="btn btn-primary" href="{% url 'inventory:product_create' %}">Добавить товар</a>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="products-tab" data-bs-toggle="tab" data-bs-target="#products" type="button" role="tab" aria-controls="products" aria-selected="true">Список товаров</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="stats-tab" data-bs-toggle="tab" data-bs-target="#stats" type="button" role="tab" aria-controls="stats" aria-selected="false">Статистика</button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade show active" id="products" role="tabpanel" aria-labelledby="products-tab">
+        <div class="card mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Артикул</th>
+                                <th>Название</th>
+                                <th>Категория</th>
+                                <th>Поставщик</th>
+                                <th>Цена</th>
+                                <th>Остаток</th>
+                                <th>Мин. остаток</th>
+                                <th>Статус</th>
+                                <th class="text-end">Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                                <tr>
+                                    <td>{{ product.article }}</td>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.category.name }}</td>
+                                    <td>{{ product.supplier.name }}</td>
+                                    <td>{{ product.price }}</td>
+                                    <td>{{ product.current_quantity }}</td>
+                                    <td>{{ product.min_threshold }}</td>
+                                    <td>
+                                        {% if product.is_low_stock %}
+                                            <span class="badge bg-warning text-dark">Низкий</span>
+                                        {% else %}
+                                            <span class="badge bg-success">В норме</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary" href="{% url 'inventory:product_edit' product.pk %}">Изменить</a>
+                                    </td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="9" class="text-center text-muted py-4">Товары на складе ещё не добавлены.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="stats" role="tabpanel" aria-labelledby="stats-tab">
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-muted mb-1">Всего товаров</div>
+                        <div class="display-6 mb-0">{{ total_products }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-muted mb-1">Общий остаток</div>
+                        <div class="display-6 mb-0">{{ total_quantity }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-muted mb-1">Низкий запас</div>
+                        <div class="display-6 mb-0">{{ low_stock_count }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="text-muted mb-1">Стоимость запасов</div>
+                        <div class="display-6 mb-0">{{ total_value }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">Категории товаров</div>
+                    <div class="list-group list-group-flush">
+                        {% for category in categories %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ category.name }}</span>
+                                <span class="badge bg-secondary rounded-pill">{{ category.product_count }}</span>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item text-muted">Нет категорий</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">Товары с низким остатком</div>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Товар</th><th>Остаток</th><th>Мин. остаток</th></tr></thead>
+                            <tbody>
+                                {% for product in low_stock_products %}
+                                    <tr>
+                                        <td>{{ product.name }}</td>
+                                        <td>{{ product.current_quantity }}</td>
+                                        <td>{{ product.min_threshold }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr><td colspan="3" class="text-center text-muted">Нет товаров с низким остатком.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">Последние складские операции</div>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Дата</th><th>Товар</th><th>Тип</th><th>Кол-во</th><th>Пользователь</th></tr></thead>
+                    <tbody>
+                        {% for op in recent_operations %}
+                            <tr>
+                                <td>{{ op.created_at|date:'Y-m-d H:i' }}</td>
+                                <td>{{ op.product.name }}</td>
+                                <td>{{ op.get_operation_type_display }}</td>
+                                <td>{{ op.quantity }}</td>
+                                <td>{{ op.created_by.username }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center text-muted">Нет операций.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,9 +1,11 @@
 from calendar import monthrange
 from datetime import date, datetime
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
 from django.contrib.auth.models import User
+from django.db.models import F, Sum
+from django.http import HttpResponse
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -28,6 +30,7 @@ from accounting.models import (
 from accounting.services import posting
 from accounting.services import reports as report_svc
 from accounting.utils import next_document_number
+from inventory.models import Product
 
 
 def _parse_date(value: str | None, default: date) -> date:
@@ -78,6 +81,12 @@ def dashboard(request):
     recent_sales = SalesInvoice.objects.order_by("-date", "-id")[:5]
     recent_purchases = PurchaseInvoice.objects.order_by("-date", "-id")[:5]
 
+    inventory_products = Product.objects.all()
+    total_inventory_items = inventory_products.count()
+    total_inventory_quantity = inventory_products.aggregate(total=Sum('current_quantity'))['total'] or 0
+    total_inventory_value = inventory_products.aggregate(total=Sum(F('price') * F('current_quantity')))['total'] or 0
+    low_stock_products_count = inventory_products.filter(current_quantity__lt=F('min_threshold')).count()
+
     return render(
         request,
         "accounting/dashboard.html",
@@ -90,6 +99,10 @@ def dashboard(request):
             "recent_entries": recent_entries,
             "recent_sales": recent_sales,
             "recent_purchases": recent_purchases,
+            "total_inventory_items": total_inventory_items,
+            "total_inventory_quantity": total_inventory_quantity,
+            "total_inventory_value": total_inventory_value,
+            "low_stock_products_count": low_stock_products_count,
         },
     )
 

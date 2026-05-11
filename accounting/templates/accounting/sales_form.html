@@ -14,10 +14,18 @@
     {% csrf_token %}
     <div class="card mb-3">
         <div class="card-body row g-3">
+            {% if form.non_field_errors %}
+                <div class="col-12">
+                    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+                </div>
+            {% endif %}
             {% for field in form %}
                 <div class="col-md-6">
                     <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                     {{ field }}
+                    {% if field.help_text %}
+                        <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
                     {% if field.errors %}<div class="text-danger small">{{ field.errors }}</div>{% endif %}
                 </div>
             {% endfor %}
