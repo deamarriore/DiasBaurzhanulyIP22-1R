@@ -31,7 +31,7 @@
                 <ul class="list-unstyled mb-0 small">
                     {% for row in key_balances %}
                         <li class="d-flex justify-content-between border-bottom py-2" style="border-color: var(--border-soft) !important;">
-                            <span><strong>{{ row.code }}</strong> <span class="text-muted">{{ row.name }}</span></span>
+                            <span><strong>{{ row.label }}</strong></span>
                             <span class="fw-semibold">{{ row.amount }}</span>
                         </li>
                     {% endfor %}

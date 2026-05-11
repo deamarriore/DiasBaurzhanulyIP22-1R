@@ -71,9 +71,8 @@ def dashboard(request):
         acc = Account.objects.filter(code=code).first()
         key_balances.append(
             {
-                "code": code,
-                "name": acc.name if acc else "—",
-                "amount": report_svc.account_balance_as_of(acc, today) if acc else None,
+                "label": acc.name if acc else f"Счёт {code}",
+                "amount": report_svc.account_balance_as_of(acc, today) if acc else "—",
             }
         )
 
