@@ -1,3 +1,4 @@
+import calendar
 from calendar import monthrange
 from datetime import date, datetime
 
@@ -65,6 +66,15 @@ def dashboard(request):
     d_from, d_to = _month_bounds(today)
     _, _, profit = report_svc.profit_and_loss(d_from, d_to)
 
+    calendar.setfirstweekday(calendar.MONDAY)
+    month_names = [
+        'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+        'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+    ]
+    calendar_weeks = calendar.monthcalendar(today.year, today.month)
+    calendar_day_names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    current_month_name = month_names[today.month - 1]
+
     key_codes = ["1010", "1030", "1210", "3310", "1330"]
     key_balances = []
     for code in key_codes:
@@ -102,7 +112,12 @@ def dashboard(request):
             "total_inventory_quantity": total_inventory_quantity,
             "total_inventory_value": total_inventory_value,
             "low_stock_products_count": low_stock_products_count,
-        },
+            "calendar_weeks": calendar_weeks,
+            "calendar_day_names": calendar_day_names,
+            "current_month_name": current_month_name,
+            "calendar_year": today.year,
+            "today_day": today.day,
+        }
     )
 
 

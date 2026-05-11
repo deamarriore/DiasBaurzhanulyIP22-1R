@@ -2,22 +2,16 @@ import os
 import tempfile
 from pathlib import Path
 
-# Построение путей внутри проекта
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: храните секретный ключ в безопасности!
 SECRET_KEY = 'django-insecure-ts$d-7tm6yf_yl0fnc-7kpl3y+bzcrw2=$fuj5^w74*$mu%f6g'
 
-# SECURITY WARNING: DEBUG всегда False в продакшене!
-DEBUG = False
+DEBUG = not os.environ.get('VERCEL')
 
-# Разрешаем все хосты
 ALLOWED_HOSTS = ['*']
 
-# Важно для работы сессий на Vercel
 CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']
 
-# Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -60,8 +54,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'warehouse_project.wsgi.application'
 
-# --- ИСПРАВЛЕННЫЙ БЛОК БАЗЫ ДАННЫХ ---
-# На Vercel принудительно используем /tmp/db.sqlite3
 if os.environ.get('VERCEL'):
     db_path = "/tmp/db.sqlite3"
 else:
@@ -74,7 +66,6 @@ DATABASES = {
     }
 }
 
-# Валидация паролей
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
     {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
@@ -82,24 +73,22 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Интернационализация
 LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-# Статические файлы
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Упрощенная настройка WhiteNoise для работы без ошибок манифеста
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
-# Проверка наличия папки static в корне проекта
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 STATICFILES_DIRS = [STATIC_DIR] if os.path.exists(STATIC_DIR) else []
 
-# Настройки входа
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/accounting/'
 LOGOUT_REDIRECT_URL = '/accounts/login/'

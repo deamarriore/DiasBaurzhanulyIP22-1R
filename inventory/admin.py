@@ -37,7 +37,7 @@ class SupplierAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('article', 'name', 'category', 'supplier', 'price', 'stock_status', 'min_threshold')
+    list_display = ('article', 'name', 'category', 'supplier', 'price', 'stock_status', 'image_preview', 'min_threshold')
     list_filter = ('category', 'supplier', 'created_at')
     search_fields = ('name', 'article')
     readonly_fields = ('created_at', 'updated_at', 'get_stock_status_display')
@@ -47,7 +47,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('name', 'article', 'category', 'supplier', 'description')
         }),
         ('Цена и остатки', {
-            'fields': ('price', 'current_quantity', 'min_threshold', 'get_stock_status_display')
+            'fields': ('price', 'current_quantity', 'min_threshold', 'image', 'get_stock_status_display')
         }),
         ('Служебная информация', {
             'fields': ('created_at', 'updated_at'),
@@ -73,6 +73,12 @@ class ProductAdmin(admin.ModelAdmin):
         )
     stock_status.short_description = 'Статус запасов'
     
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 50px; max-width: 50px; object-fit: cover;" />', obj.image.url)
+        return '—'
+    image_preview.short_description = 'Фото'
+
     def get_stock_status_display(self, obj):
         """Детальное отображение статуса запасов в форме"""
         return obj.get_stock_status()

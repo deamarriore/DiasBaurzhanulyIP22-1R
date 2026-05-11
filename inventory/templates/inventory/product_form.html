@@ -13,8 +13,13 @@
 
 <div class="card">
     <div class="card-body">
-        <form method="post">
+        <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
+            {% if form.instance.pk and form.instance.image %}
+                <div class="mb-4 text-center">
+                    <img src="{{ form.instance.image.url }}" alt="{{ form.instance.name }}" class="img-fluid rounded" style="max-height: 220px;" />
+                </div>
+            {% endif %}
             <div class="row g-3">
                 {% for field in form %}
                     <div class="col-md-6">

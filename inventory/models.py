@@ -39,6 +39,7 @@ class Product(models.Model):
     """Товар"""
     name = models.CharField(max_length=255, verbose_name="Название товара")
     article = models.CharField(max_length=100, unique=True, verbose_name="Артикул")
+    image = models.ImageField(upload_to='product_images/', blank=True, null=True, verbose_name="Изображение")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name="Категория")
     supplier = models.ForeignKey(Supplier, on_delete=models.PROTECT, verbose_name="Поставщик")
     description = models.TextField(blank=True, verbose_name="Описание")
