@@ -141,10 +141,20 @@ class SalesInvoiceLineForm(forms.ModelForm):
         cleaned_data = super().clean()
         product = cleaned_data.get("product")
         product_name = cleaned_data.get("product_name")
+        quantity = cleaned_data.get("quantity")
+        unit_price = cleaned_data.get("unit_price")
+        unit_cost = cleaned_data.get("unit_cost")
+
         if not product and not product_name:
             raise forms.ValidationError(
                 "Выберите товар из списка или введите его наименование."
             )
+        if quantity is None or quantity <= 0:
+            raise forms.ValidationError("Количество должно быть больше нуля.")
+        if unit_price is None or unit_price <= 0:
+            raise forms.ValidationError("Цена продажи должна быть больше нуля.")
+        if unit_cost is None or unit_cost < 0:
+            raise forms.ValidationError("Себестоимость не должна быть отрицательной.")
         return cleaned_data
 
     def save(self, commit=True):

@@ -46,8 +46,12 @@ def post_sales_invoice(invoice: SalesInvoice, user=None) -> JournalEntry:
         raise ValidationError("Сумма реализации должна быть больше нуля.")
 
     for ln in lines:
-        if ln.quantity <= 0:
+        if ln.quantity is None or ln.quantity <= 0:
             raise ValidationError("Количество в строке должно быть больше нуля.")
+        if ln.unit_price is None or ln.unit_price <= 0:
+            raise ValidationError("Цена продажи в строке должна быть больше нуля.")
+        if ln.unit_cost is None or ln.unit_cost < 0:
+            raise ValidationError("Себестоимость в строке не должна быть отрицательной.")
         if ln.product.current_quantity < ln.quantity:
             raise ValidationError(
                 f"Недостаточно товара «{ln.product.name}»: "
