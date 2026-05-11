@@ -43,7 +43,19 @@
             {% for f in formset %}
                 <tr>
                     {% for hidden in f.hidden_fields %}{{ hidden }}{% endfor %}
-                    <td>{{ f.product }}</td>
+                    <td>
+                        {{ f.product }}
+                        {% if f.product.help_text %}
+                            <div class="form-text small">{{ f.product.help_text }}</div>
+                        {% endif %}
+                        {{ f.product_name }}
+                        {% if f.product_name.help_text %}
+                            <div class="form-text small">{{ f.product_name.help_text }}</div>
+                        {% endif %}
+                        {% if f.product_name.errors %}
+                            <div class="text-danger small">{{ f.product_name.errors }}</div>
+                        {% endif %}
+                    </td>
                     <td style="max-width:120px">{{ f.quantity }}</td>
                     <td style="max-width:140px">{{ f.unit_price }}</td>
                     <td style="max-width:140px">{{ f.unit_cost }}</td>

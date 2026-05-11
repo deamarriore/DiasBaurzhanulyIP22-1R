@@ -2,8 +2,19 @@ from django import forms
 from django.forms import inlineformset_factory
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
+from django.utils.text import slugify
+from uuid import uuid4
 
-from accounting.models import CashOperation, PurchaseInvoice, PurchaseInvoiceLine, SalesInvoice, SalesInvoiceLine
+from accounting.models import (
+    CashOperation,
+    Counterparty,
+    CounterpartyKind,
+    PurchaseInvoice,
+    PurchaseInvoiceLine,
+    SalesInvoice,
+    SalesInvoiceLine,
+)
+from inventory.models import Category, Product, Supplier
 
 
 def _bootstrap_form_controls(form: forms.ModelForm) -> None:
@@ -17,27 +28,163 @@ def _bootstrap_form_controls(form: forms.ModelForm) -> None:
             w.attrs.setdefault("class", "form-control")
 
 
+def _ensure_default_customers() -> None:
+    default_customers = [
+        "ИП Ернар",
+        "ИП АЛИМ",
+        "ИП Хусан",
+        "ИП",
+    ]
+    for name in default_customers:
+        Counterparty.objects.get_or_create(
+            name=name,
+            kind=CounterpartyKind.CUSTOMER,
+        )
+
+
 class SalesInvoiceForm(forms.ModelForm):
+    counterparty_name = forms.CharField(
+        required=False,
+        label="Новый покупатель",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Укажите нового покупателя, если его нет в списке",
+            }
+        ),
+        help_text="Если покупателя нет в списке, введите его имя вручную.",
+    )
+
     class Meta:
         model = SalesInvoice
         fields = ["number", "date", "counterparty", "note"]
         widgets = {"note": forms.Textarea(attrs={"rows": 2, "class": "form-control"})}
 
     def __init__(self, *args, **kwargs):
+        _ensure_default_customers()
         super().__init__(*args, **kwargs)
         _bootstrap_form_controls(self)
         # Ограничить контрагентов покупателями
-        self.fields['counterparty'].queryset = self.fields['counterparty'].queryset.filter(
-            kind__in=['customer', 'both']
+        self.fields["counterparty"].queryset = self.fields["counterparty"].queryset.filter(
+            kind__in=["customer", "both"]
         )
-        self.fields['counterparty'].empty_label = 'Выберите покупателя'
-        if not self.fields['counterparty'].queryset.exists():
-            self.fields['counterparty'].help_text = 'Сначала добавьте контрагента с типом Клиент или Клиент и поставщик.'
+        self.fields["counterparty"].empty_label = "Выберите покупателя"
+        self.fields["counterparty"].help_text = "Или введите нового покупателя вручную."
+        if not self.fields["counterparty"].queryset.exists():
+            self.fields["counterparty"].help_text = (
+                "Сначала добавьте контрагента с типом Клиент или Клиент и поставщик "
+                "или введите нового покупателя."
+            )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        counterparty = cleaned_data.get("counterparty")
+        counterparty_name = cleaned_data.get("counterparty_name")
+
+        if not counterparty and counterparty_name:
+            counterparty, _ = Counterparty.objects.get_or_create(
+                name=counterparty_name,
+                defaults={"kind": CounterpartyKind.CUSTOMER},
+            )
+            cleaned_data["counterparty"] = counterparty
+
+        if not counterparty:
+            raise forms.ValidationError(
+                "Выберите покупателя из списка или введите его имя."
+            )
+        return cleaned_data
+
+
+class SalesInvoiceLineForm(forms.ModelForm):
+    product_name = forms.CharField(
+        required=False,
+        label="Товар (введите вручную)",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Введите наименование товара",
+            }
+        ),
+        help_text="Если товара нет в списке, введите его название вручную.",
+    )
+
+    class Meta:
+        model = SalesInvoiceLine
+        fields = ["product", "quantity", "unit_price", "unit_cost"]
+        widgets = {
+            "product": forms.Select(attrs={"class": "form-select"}),
+            "quantity": forms.NumberInput(attrs={"class": "form-control"}),
+            "unit_price": forms.NumberInput(attrs={"class": "form-control"}),
+            "unit_cost": forms.NumberInput(attrs={"class": "form-control"}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _bootstrap_form_controls(self)
+        self.fields["product"].required = False
+        self.fields["product"].help_text = (
+            "Выберите товар из списка или введите название вручную."
+        )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        product = cleaned_data.get("product")
+        product_name = cleaned_data.get("product_name")
+        if not product and not product_name:
+            raise forms.ValidationError(
+                "Выберите товар из списка или введите его наименование."
+            )
+        return cleaned_data
+
+    def save(self, commit=True):
+        product = self.cleaned_data.get("product")
+        product_name = self.cleaned_data.get("product_name")
+        if not product and product_name:
+            product = self._get_or_create_free_product(
+                product_name,
+                quantity=self.cleaned_data.get("quantity") or 0,
+                price=self.cleaned_data.get("unit_price") or 0,
+            )
+        self.instance.product = product
+        return super().save(commit=commit)
+
+    def _get_or_create_free_product(self, name: str, quantity: int, price):
+        category, _ = Category.objects.get_or_create(name="Разное")
+        supplier, _ = Supplier.objects.get_or_create(
+            name="Неизвестный поставщик",
+            defaults={
+                "contact_person": "",
+                "phone": "",
+                "email": "",
+                "address": "Не задано",
+            },
+        )
+        article_base = slugify(name) or "product"
+        article = article_base
+        if Product.objects.filter(article=article).exists():
+            article = f"{article_base}-{uuid4().hex[:6]}"
+        product, created = Product.objects.get_or_create(
+            name=name,
+            defaults={
+                "article": article,
+                "category": category,
+                "supplier": supplier,
+                "description": "Введено вручную",
+                "price": price,
+                "current_quantity": quantity,
+                "min_threshold": 0,
+            },
+        )
+        if product.current_quantity < quantity:
+            product.current_quantity = quantity
+            product.save(update_fields=["current_quantity"])
+        return product
 
 
 SalesInvoiceLineFormSet = inlineformset_factory(
     SalesInvoice,
     SalesInvoiceLine,
+    form=SalesInvoiceLineForm,
     fields=["product", "quantity", "unit_price", "unit_cost"],
     extra=1,
     can_delete=True,
