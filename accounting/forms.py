@@ -43,6 +43,14 @@ def _ensure_default_customers() -> None:
 
 
 class SalesInvoiceForm(forms.ModelForm):
+    counterparty = forms.ModelChoiceField(
+        queryset=Counterparty.objects.none(),
+        required=False,
+        label="Покупатель",
+        widget=forms.Select(attrs={"class": "form-select"}),
+        empty_label="Выберите покупателя",
+        help_text="Или введите нового покупателя вручную.",
+    )
     counterparty_name = forms.CharField(
         required=False,
         label="Новый покупатель",
@@ -65,9 +73,10 @@ class SalesInvoiceForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         _bootstrap_form_controls(self)
         # Ограничить контрагентов покупателями
-        self.fields["counterparty"].queryset = self.fields["counterparty"].queryset.filter(
+        self.fields["counterparty"].queryset = Counterparty.objects.filter(
             kind__in=["customer", "both"]
         )
+        self.fields["counterparty"].required = False
         self.fields["counterparty"].empty_label = "Выберите покупателя"
         self.fields["counterparty"].help_text = "Или введите нового покупателя вручную."
         if not self.fields["counterparty"].queryset.exists():
@@ -87,8 +96,10 @@ class SalesInvoiceForm(forms.ModelForm):
                 defaults={"kind": CounterpartyKind.CUSTOMER},
             )
             cleaned_data["counterparty"] = counterparty
+            if "counterparty" in self._errors:
+                del self._errors["counterparty"]
 
-        if not counterparty:
+        if not counterparty and not counterparty_name:
             raise forms.ValidationError(
                 "Выберите покупателя из списка или введите его имя."
             )
@@ -188,8 +199,8 @@ SalesInvoiceLineFormSet = inlineformset_factory(
     fields=["product", "quantity", "unit_price", "unit_cost"],
     extra=1,
     can_delete=True,
-    min_num=1,
-    validate_min=True,
+    min_num=0,
+    validate_min=False,
     widgets={
         "product": forms.Select(attrs={"class": "form-select"}),
         "quantity": forms.NumberInput(attrs={"class": "form-control"}),

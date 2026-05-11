@@ -140,22 +140,32 @@ def sales_create(request):
     }
     if request.method == "POST":
         form = SalesInvoiceForm(request.POST)
-        formset = SalesInvoiceLineFormSet(request.POST)
+        formset = SalesInvoiceLineFormSet(request.POST, instance=SalesInvoice())
+        is_post = "save_post" in request.POST
         if form.is_valid() and formset.is_valid():
-            inv = form.save(commit=False)
-            inv.created_by = request.user
-            inv.save()
-            formset.instance = inv
-            formset.save()
-            if "save_post" in request.POST:
-                try:
-                    posting.post_sales_invoice(inv, request.user)
-                    messages.success(request, "Документ сохранён и проведён.")
-                except ValidationError as e:
-                    messages.error(request, _validation_messages(e))
-            else:
-                messages.success(request, "Черновик сохранён. Проведите документ на странице просмотра.")
-            return redirect("accounting:sales_detail", pk=inv.pk)
+            if is_post:
+                has_lines = any(
+                    form.cleaned_data and not form.cleaned_data.get("DELETE", False)
+                    and (form.cleaned_data.get("product") or form.cleaned_data.get("product_name"))
+                    for form in formset.forms
+                )
+                if not has_lines:
+                    formset.add_error(None, "Добавьте хотя бы одну строку перед проведением документа.")
+            if not is_post or not formset.non_form_errors():
+                inv = form.save(commit=False)
+                inv.created_by = request.user
+                inv.save()
+                formset.instance = inv
+                formset.save()
+                if is_post:
+                    try:
+                        posting.post_sales_invoice(inv, request.user)
+                        messages.success(request, "Документ сохранён и проведён.")
+                    except ValidationError as e:
+                        messages.error(request, _validation_messages(e))
+                else:
+                    messages.success(request, "Черновик сохранён. Проведите документ на странице просмотра.")
+                return redirect("accounting:sales_detail", pk=inv.pk)
     else:
         form = SalesInvoiceForm(initial=initial)
         formset = SalesInvoiceLineFormSet()
