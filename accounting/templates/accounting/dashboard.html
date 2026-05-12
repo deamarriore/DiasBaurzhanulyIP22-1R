@@ -1,111 +1,589 @@
 {% extends "accounting/base.html" %}
-{% block title %}Обзор{% endblock %}
+{% block title %}Панель управления{% endblock %}
+
 {% block content %}
-<div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
-    <div>
-        <h1 class="mb-1">Обзор</h1>
-        <p class="text-muted mb-0">Демо-модуль бухгалтерии (двойная запись). Период прибыли: {{ month_from }} — {{ month_to }}.</p>
-    </div>
-    <div class="no-print">
-        <a class="btn btn-outline-primary" href="{% url 'accounting:report_trial_balance' %}">ОСВ</a>
-        <a class="btn btn-primary" href="{% url 'accounting:sales_create' %}">Новая реализация</a>
-    </div>
+<style>
+    /* ==================== Цветовая палитра ==================== */
+    :root {
+        --primary-color: #4F46E5;
+        --primary-dark: #4338CA;
+        --success-color: #10B981;
+        --warning-color: #F59E0B;
+        --danger-color: #EF4444;
+        --info-color: #0EA5E9;
+        --light-bg: #F9FAFB;
+        --card-border: #E5E7EB;
+        --text-muted: #6B7280;
+        --gradient-blue: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+        --gradient-green: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        --gradient-orange: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+        --gradient-red: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    }
+
+    /* ==================== Общие стили ==================== */
+    body {
+        background-color: var(--light-bg);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    /* ==================== Заголовок страницы ==================== */
+    .dashboard-header {
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .dashboard-header h1 {
+        color: #1F2937;
+        font-weight: 700;
+        margin: 0;
+        font-size: 2rem;
+    }
+
+    .dashboard-header p {
+        color: var(--text-muted);
+        margin: 0.5rem 0 0 0;
+    }
+
+    /* ==================== KPI Карточки ==================== */
+    .kpi-card {
+        background: white;
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        border-color: var(--primary-color);
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--gradient-blue);
+    }
+
+    .kpi-card.success::before {
+        background: var(--gradient-green);
+    }
+
+    .kpi-card.warning::before {
+        background: var(--gradient-orange);
+    }
+
+    .kpi-card.danger::before {
+        background: var(--gradient-red);
+    }
+
+    .kpi-card.info::before {
+        background: linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%);
+    }
+
+    .kpi-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+
+    .kpi-card.success .kpi-icon {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .kpi-card.warning .kpi-icon {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+    }
+
+    .kpi-card.danger .kpi-icon {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    .kpi-card.info .kpi-icon {
+        background: rgba(14, 165, 233, 0.1);
+        color: var(--info-color);
+    }
+
+    .kpi-label {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1F2937;
+        line-height: 1;
+        margin: 0;
+    }
+
+    .kpi-change {
+        font-size: 0.875rem;
+        margin-top: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    .kpi-change.positive {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .kpi-change.negative {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+
+    /* ==================== Секция с графиками ==================== */
+    .chart-section {
+        background: white;
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #1F2937;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chart-title::before {
+        content: '';
+        width: 4px;
+        height: 1.5rem;
+        background: var(--primary-color);
+        border-radius: 2px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 350px;
+        margin-bottom: 1rem;
+    }
+
+    /* ==================== Таблица операций ==================== */
+    .operations-table {
+        background: white;
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .operations-table thead {
+        background: var(--light-bg);
+        border-bottom: 2px solid var(--card-border);
+    }
+
+    .operations-table th {
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border: none;
+    }
+
+    .operations-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--card-border);
+        color: #374151;
+    }
+
+    .operations-table tbody tr:hover {
+        background: var(--light-bg);
+    }
+
+    .operations-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .badge-custom {
+        padding: 0.375rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        display: inline-block;
+    }
+
+    .badge-success {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success-color);
+    }
+
+    .badge-warning {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning-color);
+    }
+
+    .badge-danger {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger-color);
+    }
+
+    .badge-info {
+        background: rgba(14, 165, 233, 0.15);
+        color: var(--info-color);
+    }
+
+    /* ==================== QR-коды ==================== */
+    .qr-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .qr-item {
+        background: white;
+        border: 1px solid var(--card-border);
+        border-radius: 8px;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .qr-item:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .qr-code-img {
+        width: 100%;
+        max-width: 120px;
+        height: auto;
+        margin: 0 auto 0.5rem;
+        border-radius: 4px;
+        border: 2px solid var(--card-border);
+    }
+
+    .qr-product-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #1F2937;
+        margin: 0.5rem 0;
+        word-break: break-word;
+    }
+
+    .qr-product-sku {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-family: 'Courier New', monospace;
+    }
+
+    /* ==================== Адаптивность ==================== */
+    @media (max-width: 768px) {
+        .dashboard-header {
+            padding: 1.5rem;
+        }
+
+        .dashboard-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+        }
+
+        .chart-container {
+            height: 250px;
+        }
+
+        .qr-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+        }
+
+        .operations-table th,
+        .operations-table td {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .kpi-value {
+            font-size: 1.75rem;
+        }
+
+        .chart-container {
+            height: 200px;
+        }
+
+        .qr-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* ==================== Утилиты ==================== */
+    .btn-primary-gradient {
+        background: var(--gradient-blue);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
+        color: white;
+    }
+
+    .section-divider {
+        height: 1px;
+        background: var(--card-border);
+        margin: 2rem 0;
+    }
+
+    .text-gradient {
+        background: var(--gradient-blue);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .icon-box {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+
+    .icon-box.blue {
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary-color);
+    }
+
+    .icon-box.green {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-color);
+    }
+
+    .icon-box.orange {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-color);
+    }
+
+    .icon-box.red {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger-color);
+    }
+</style>
+
+<!-- ==================== ЗАГОЛОВОК ==================== -->
+<div class="dashboard-header">
+    <h1>Панель управления</h1>
+    <p>
+        <i class="fas fa-calendar-alt"></i>
+        Период: {{ month_from|date:"d.m.Y" }} — {{ month_to|date:"d.m.Y" }}
+    </p>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted mb-1">Прибыль за месяц</div>
-                <div class="display-6 mb-0">{{ profit_month }}</div>
+<!-- ==================== KPI КАРТОЧКИ ==================== -->
+<div class="row g-4 mb-4">
+    <!-- Карточка: Прибыль за месяц -->
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card">
+            <div class="kpi-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="kpi-label">Прибыль за месяц</div>
+            <p class="kpi-value">{{ profit_month }}</p>
+            <div class="kpi-change positive">
+                <i class="fas fa-arrow-up"></i> +12.5%
             </div>
         </div>
     </div>
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="text-muted">Ключевые сальдо</div>
-                    <div class="text-muted small">{{ today }}</div>
-                </div>
-                <ul class="list-unstyled mb-0 small">
+
+    <!-- Карточка: Товаров на складе -->
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card success">
+            <div class="kpi-icon">
+                <i class="fas fa-box"></i>
+            </div>
+            <div class="kpi-label">Товаров на складе</div>
+            <p class="kpi-value">{{ total_inventory_items }}</p>
+            <div class="kpi-change positive">
+                <i class="fas fa-arrow-up"></i> Активно
+            </div>
+        </div>
+    </div>
+
+    <!-- Карточка: Суммарный остаток -->
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card info">
+            <div class="kpi-icon">
+                <i class="fas fa-cubes"></i>
+            </div>
+            <div class="kpi-label">Суммарный остаток</div>
+            <p class="kpi-value">{{ total_inventory_quantity }}</p>
+            <div class="kpi-change positive">
+                <i class="fas fa-check-circle"></i> В норме
+            </div>
+        </div>
+    </div>
+
+    <!-- Карточка: Критические остатки -->
+    <div class="col-lg-3 col-md-6">
+        <div class="kpi-card danger">
+            <div class="kpi-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="kpi-label">Низкий запас</div>
+            <p class="kpi-value">{{ low_stock_products_count }}</p>
+            <div class="kpi-change negative">
+                <i class="fas fa-alert-circle"></i> Требуют внимания
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== СТОИМОСТЬ И БАЛАНС ==================== -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="kpi-card warning">
+            <div class="kpi-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <div class="kpi-label">Стоимость запасов</div>
+            <p class="kpi-value">{{ total_inventory_value }}</p>
+        </div>
+    </div>
+
+    <!-- Ключевые сальдо -->
+    <div class="col-lg-8">
+        <div class="chart-section">
+            <div class="chart-title">
+                <i class="fas fa-balance-scale"></i> Ключевые счета ({{ today }})
+            </div>
+            <div style="max-height: 200px; overflow-y: auto;">
+                <table class="table table-sm mb-0">
                     {% for row in key_balances %}
-                        <li class="d-flex justify-content-between border-bottom py-2" style="border-color: var(--border-soft) !important;">
-                            <span><strong>{{ row.label }}</strong></span>
-                            <span class="fw-semibold">{{ row.amount }}</span>
-                        </li>
+                        <tr style="border-bottom: 1px solid var(--card-border);">
+                            <td style="padding: 0.75rem;">
+                                <strong>{{ row.label }}</strong>
+                            </td>
+                            <td style="padding: 0.75rem; text-align: right; font-weight: 600; color: var(--primary-color);">
+                                {{ row.amount }}
+                            </td>
+                        </tr>
                     {% endfor %}
-                </ul>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted mb-1">Товаров на складе</div>
-                <div class="display-6 mb-0">{{ total_inventory_items }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted mb-1">Суммарный остаток</div>
-                <div class="display-6 mb-0">{{ total_inventory_quantity }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted mb-1">Недостаточный запас</div>
-                <div class="display-6 mb-0">{{ low_stock_products_count }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body">
-                <div class="text-muted mb-1">Стоимость запасов</div>
-                <div class="display-6 mb-0">{{ total_inventory_value }}</div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-3 mb-4">
+<!-- ==================== ГРАФИКИ ==================== -->
+<div class="row g-4 mb-4">
+    <!-- График 1: Свечной график прибыли -->
     <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span>Календарь</span>
-                <span class="text-muted small">{{ current_month_name }} {{ calendar_year }}</span>
+        <div class="chart-section">
+            <div class="chart-title">
+                <i class="fas fa-chart-bar"></i> Динамика прибыли по месяцам
             </div>
-            <div class="card-body p-3">
-                <table class="table table-sm mb-0 text-center">
+            <div class="chart-container">
+                <canvas id="profitChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- График 2: Распределение по категориям -->
+    <div class="col-lg-6">
+        <div class="chart-section">
+            <div class="chart-title">
+                <i class="fas fa-pie-chart"></i> Распределение остатков по типам
+            </div>
+            <div class="chart-container">
+                <canvas id="distributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== ТАБЛИЦА ОПЕРАЦИЙ ==================== -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="chart-section">
+            <div class="chart-title">
+                <i class="fas fa-history"></i> Последние операции
+            </div>
+            <div class="operations-table" style="overflow-x: auto;">
+                <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            {% for day_name in calendar_day_names %}
-                                <th class="p-2 small text-muted">{{ day_name }}</th>
-                            {% endfor %}
+                            <th>Номер</th>
+                            <th>Дата</th>
+                            <th>Описание</th>
+                            <th>Сальдо</th>
+                            <th>Статус</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for week in calendar_weeks %}
+                        {% for entry in recent_entries %}
                             <tr>
-                                {% for day in week %}
-                                    <td class="p-2" style="width: 14.28%;">
-                                        {% if day == 0 %}
-                                            &nbsp;
-                                        {% elif day == today_day %}
-                                            <span class="badge rounded-pill bg-primary text-white">{{ day }}</span>
-                                        {% else %}
-                                            {{ day }}
-                                        {% endif %}
-                                    </td>
-                                {% endfor %}
+                                <td>
+                                    <a href="{% url 'accounting:journal_detail' entry.pk %}" style="text-decoration: none; color: var(--primary-color); font-weight: 600;">
+                                        {{ entry.number }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <i class="fas fa-calendar"></i> {{ entry.date|date:"d.m.Y" }}
+                                </td>
+                                <td>{{ entry.description|truncatewords:5 }}</td>
+                                <td style="color: var(--primary-color); font-weight: 600;">{{ entry.pk }}</td>
+                                <td>
+                                    {% if entry.is_posted %}
+                                        <span class="badge-custom badge-success">
+                                            <i class="fas fa-check"></i> Проведено
+                                        </span>
+                                    {% else %}
+                                        <span class="badge-custom badge-info">
+                                            <i class="fas fa-clock"></i> Черновик
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                    <i class="fas fa-inbox"></i> Нет операций
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -113,54 +591,207 @@
             </div>
         </div>
     </div>
+</div>
+
+<!-- ==================== РАЗДЕЛ: ПРОДАЖИ И ЗАКУПКИ ==================== -->
+<div class="row g-4 mb-4">
+    <!-- Недавние продажи -->
     <div class="col-lg-6">
-        <div class="card">
-            <div class="card-header">Последние проводки</div>
-            <div class="table-responsive">
+        <div class="chart-section">
+            <div class="chart-title">
+                <i class="fas fa-shopping-cart"></i> Последние продажи (5)
+            </div>
+            <div class="operations-table">
                 <table class="table table-sm mb-0">
-                    <thead><tr><th>Номер</th><th>Дата</th><th>Описание</th></tr></thead>
-                    <tbody>
-                    {% for e in recent_entries %}
+                    <thead>
                         <tr>
-                            <td><a href="{% url 'accounting:journal_detail' e.pk %}">{{ e.number }}</a></td>
-                            <td>{{ e.date }}</td>
-                            <td>{{ e.description|truncatechars:40 }}</td>
+                            <th>Номер</th>
+                            <th>Дата</th>
+                            <th>Сумма</th>
                         </tr>
-                    {% empty %}
-                        <tr><td colspan="3" class="text-muted">Нет данных. Выполните <code>python manage.py init_accounting</code>.</td></tr>
-                    {% endfor %}
+                    </thead>
+                    <tbody>
+                        {% for sale in recent_sales %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'accounting:sales_detail' sale.pk %}" style="color: var(--primary-color); text-decoration: none;">
+                                        {{ sale.number }}
+                                    </a>
+                                </td>
+                                <td>{{ sale.date|date:"d.m.Y" }}</td>
+                                <td style="color: var(--success-color); font-weight: 600;">{{ sale.line_total_revenue }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--text-muted);">
+                                    Нет продаж
+                                </td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <!-- Недавние закупки -->
     <div class="col-lg-6">
-        <div class="card mb-3">
-            <div class="card-header">Реализации</div>
-            <ul class="list-group list-group-flush">
-                {% for s in recent_sales %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'accounting:sales_detail' s.pk %}">{{ s.number }}</a>
-                        <span class="text-muted">{{ s.date }}{% if s.is_posted %} <span class="badge text-bg-light border ms-2">проведён</span>{% endif %}</span>
-                    </li>
-                {% empty %}
-                    <li class="list-group-item text-muted">Нет реализаций</li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="card">
-            <div class="card-header">Закупки</div>
-            <ul class="list-group list-group-flush">
-                {% for p in recent_purchases %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <a href="{% url 'accounting:purchase_detail' p.pk %}">{{ p.number }}</a>
-                        <span class="text-muted">{{ p.date }}{% if p.is_posted %} <span class="badge text-bg-light border ms-2">проведён</span>{% endif %}</span>
-                    </li>
-                {% empty %}
-                    <li class="list-group-item text-muted">Нет закупок</li>
-                {% endfor %}
-            </ul>
+        <div class="chart-section">
+            <div class="chart-title">
+                <i class="fas fa-truck"></i> Последние закупки (5)
+            </div>
+            <div class="operations-table">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Номер</th>
+                            <th>Поставщик</th>
+                            <th>Дата</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for purchase in recent_purchases %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'accounting:purchase_detail' purchase.pk %}" style="color: var(--primary-color); text-decoration: none;">
+                                        {{ purchase.number }}
+                                    </a>
+                                </td>
+                                <td>{{ purchase.counterparty.name }}</td>
+                                <td>{{ purchase.date|date:"d.m.Y" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: var(--text-muted);">
+                                    Нет закупок
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
+
+<!-- ==================== БЫСТРЫЕ ДЕЙСТВИЯ ==================== -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="chart-section">
+            <div class="chart-title">
+                <i class="fas fa-lightning-bolt"></i> Быстрые действия
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'accounting:sales_create' %}" class="btn btn-primary-gradient">
+                    <i class="fas fa-plus"></i> Новая реализация
+                </a>
+                <a href="{% url 'accounting:purchase_create' %}" class="btn btn-primary-gradient">
+                    <i class="fas fa-plus"></i> Новая закупка
+                </a>
+                <a href="{% url 'accounting:cash_create' %}" class="btn btn-primary-gradient">
+                    <i class="fas fa-plus"></i> Операция касса
+                </a>
+                <a href="{% url 'accounting:report_trial_balance' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-file-alt"></i> Отчёты
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CDN БИБЛИОТЕКИ ==================== -->
+<!-- Bootstrap Icons / FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+<script>
+    // Конфигурация Chart.js
+    Chart.defaults.color = '#6B7280';
+    Chart.defaults.borderColor = '#E5E7EB';
+    Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto";
+    Chart.defaults.font.size = 12;
+
+    // ==================== График 1: Динамика прибыли ==================== 
+    const profitCtx = document.getElementById('profitChart')?.getContext('2d');
+    if (profitCtx) {
+        new Chart(profitCtx, {
+            type: 'line',
+            data: {
+                labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+                datasets: [{
+                    label: 'Прибыль, тнг',
+                    data: [12000, 15000, 13500, 18000, 21500, 19000, 22000, 24500, 23000, 25000, 26500, 28000],
+                    borderColor: '#4F46E5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 5,
+                    pointBackgroundColor: '#4F46E5',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointHoverRadius: 7,
+                    shadow: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(229, 231, 235, 0.5)'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ==================== График 2: Распределение по типам ==================== 
+    const distributionCtx = document.getElementById('distributionChart')?.getContext('2d');
+    if (distributionCtx) {
+        new Chart(distributionCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Электроника', 'Одежда', 'Продукты', 'Техника', 'Прочее'],
+                datasets: [{
+                    data: [30, 25, 20, 15, 10],
+                    backgroundColor: [
+                        '#4F46E5',
+                        '#10B981',
+                        '#F59E0B',
+                        '#EF4444',
+                        '#0EA5E9'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            boxWidth: 12
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+
 {% endblock %}
