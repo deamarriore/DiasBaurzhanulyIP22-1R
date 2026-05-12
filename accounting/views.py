@@ -23,6 +23,8 @@ from accounting.forms import (
 from accounting.models import (
     Account,
     CashOperation,
+    Counterparty,
+    CounterpartyKind,
     JournalEntry,
     PurchaseInvoice,
     PurchaseInvoiceLine,
@@ -220,6 +222,29 @@ def purchase_list(request):
 
 
 @login_required
+def purchase_detail(request, pk):
+    inv = get_object_or_404(PurchaseInvoice.objects.select_related("counterparty", "journal_entry"), pk=pk)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        try:
+            if action == "post":
+                posting.post_purchase_invoice(inv, request.user)
+                messages.success(request, "Проведено.")
+            elif action == "unpost":
+                posting.unpost_purchase_invoice(inv, request.user)
+                messages.success(request, "Проведение снято.")
+        except ValidationError as e:
+            messages.error(request, _validation_messages(e))
+        return redirect("accounting:purchase_detail", pk=pk)
+    lines = inv.lines.select_related("product")
+    return render(
+        request,
+        "accounting/purchase_detail.html",
+        {"invoice": inv, "lines": lines},
+    )
+
+
+@login_required
 def purchase_create(request):
     today = timezone.now().date()
     initial = {
@@ -229,17 +254,24 @@ def purchase_create(request):
     if request.method == "POST":
         form = PurchaseInvoiceForm(request.POST)
         if form.is_valid():
+            counterparty_name = form.cleaned_data['counterparty']
+            counterparty, created = Counterparty.objects.get_or_create(
+                name=counterparty_name,
+                defaults={'kind': CounterpartyKind.SUPPLIER}
+            )
             inv = form.save(commit=False)
+            inv.counterparty = counterparty
             inv.created_by = request.user
             inv.save()
             messages.success(request, "Черновик сохранён. Добавьте товары.")
             return redirect("accounting:purchase_detail", pk=inv.pk)
     else:
         form = PurchaseInvoiceForm(initial=initial)
+    suppliers = Counterparty.objects.filter(kind__in=['supplier', 'both']).values_list('name', flat=True)
     return render(
         request,
         "accounting/purchase_form.html",
-        {"form": form, "title": "Новая закупка", "invoice": None},
+        {"form": form, "title": "Новая закупка", "invoice": None, "suppliers": suppliers},
     )
 
 

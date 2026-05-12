@@ -31,6 +31,11 @@
             {% endfor %}
         </div>
     </div>
+    <datalist id="suppliers-list">
+        {% for supplier in suppliers %}
+        <option value="{{ supplier }}">
+        {% endfor %}
+    </datalist>
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h5 class="mb-0">Строки</h5>
         <span class="text-muted small">Товары берутся из склада</span>

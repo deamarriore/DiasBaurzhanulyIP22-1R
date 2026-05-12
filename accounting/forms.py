@@ -221,21 +221,23 @@ SalesInvoiceLineFormSet = inlineformset_factory(
 
 
 class PurchaseInvoiceForm(forms.ModelForm):
+    counterparty = forms.CharField(
+        label="Поставщик",
+        widget=forms.TextInput(attrs={"class": "form-control", "list": "suppliers-list"}),
+        required=True,
+    )
+
     class Meta:
         model = PurchaseInvoice
-        fields = ["number", "date", "counterparty", "note"]
+        fields = ["number", "date", "note"]
         widgets = {"note": forms.Textarea(attrs={"rows": 2, "class": "form-control"})}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         _bootstrap_form_controls(self)
-        # Ограничить контрагентов поставщиками
-        self.fields['counterparty'].queryset = self.fields['counterparty'].queryset.filter(
-            kind__in=['supplier', 'both']
-        )
-        self.fields['counterparty'].empty_label = 'Выберите поставщика'
-        if not self.fields['counterparty'].queryset.exists():
-            self.fields['counterparty'].help_text = 'Сначала добавьте контрагента с типом Поставщик или Клиент и поставщик.'
+        suppliers = Counterparty.objects.filter(kind__in=['supplier', 'both'])
+        self.suppliers_list = [(cp.name, cp.name) for cp in suppliers]
+        self.fields['counterparty'].help_text = 'Выберите из списка или введите имя нового поставщика.'
 
 
 PurchaseInvoiceLineFormSet = inlineformset_factory(
